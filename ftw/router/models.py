@@ -26,10 +26,11 @@ class Linie(models.Model):
         return u'%s (%s)' % (self.nazwa_linii, self.kod)
 
 class Przystanki(models.Model):     
-    ulica = models.ForeignKey(Ulice)
+    kod = models.CharField(max_length=20)
+    ulica = models.ForeignKey(Ulice, blank=True, null=True)
     linia = models.ManyToManyField(Linie, blank=True)
-    lat = models.DecimalField(max_digits=10, decimal_places=8)
-    lng = models.DecimalField(max_digits=10, decimal_places=8)
+    lat = models.DecimalField(max_digits=14, decimal_places=12)
+    lng = models.DecimalField(max_digits=14, decimal_places=12)
     nazwa_pomocnicza = models.CharField(max_length=100, blank=True)
     typ = models.ManyToManyField('TypTrasy') 
     
@@ -37,7 +38,7 @@ class Przystanki(models.Model):
         verbose_name_plural = "Przystanki"
 
     def __unicode__(self):
-        return u'%s (%s)' % (self.ulica, self.nazwa_pomocnicza)
+        return u'%s (%s)' % (self.nazwa_pomocnicza, self.kod)
 
 class PrzystanekPozycja(models.Model):
     przystanek = models.ForeignKey(Przystanki, related_name="przystanek")

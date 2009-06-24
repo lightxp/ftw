@@ -1,0 +1,3 @@
+BEGIN;
+ALTER TABLE router_przystanki  ALTER COLUMN ulica_id DROP NOT NULL;
+COMMIT;

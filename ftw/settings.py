@@ -43,7 +43,7 @@ MEDIA_ROOT = ''
 MEDIA_URL = ''
 
 # Absolute path to the directory that holds data to import
-IMPORT_DATA_ROOT = 's:/sources/phtdocs/ftw/'
+IMPORT_DATA_ROOT = 's:/sources/phtdocs/ftw/csv/'
 
 # URL prefix for admin media -- CSS, JavaScript and images. Make sure to use a
 # trailing slash.

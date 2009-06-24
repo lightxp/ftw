@@ -8,6 +8,7 @@ class UliceAdmin(admin.ModelAdmin):
 
 class RozkladInlines(admin.TabularInline):
     model = Rozklad
+    extra = 30
 
 class RozkladPrzystankiAdmin(admin.ModelAdmin):
     inlines = [RozkladInlines]
@@ -22,3 +23,4 @@ admin.site.register(Przystanki)
 admin.site.register(RozkladPrzystanek, RozkladPrzystankiAdmin)
 admin.site.register(Trasy)
 admin.site.register(PrzystanekPozycja)
+admin.site.register(TypTrasy)

@@ -42,6 +42,9 @@ MEDIA_ROOT = ''
 # Examples: "http://media.lawrence.com", "http://example.com/media/"
 MEDIA_URL = ''
 
+# Absolute path to the directory that holds data to import
+IMPORT_DATA_ROOT = 's:/sources/phtdocs/ftw/'
+
 # URL prefix for admin media -- CSS, JavaScript and images. Make sure to use a
 # trailing slash.
 # Examples: "http://foo.com/media/", "/media/".
@@ -77,7 +80,6 @@ INSTALLED_APPS = (
     'django.contrib.contenttypes',
     'django.contrib.sessions',
     'django.contrib.sites',
-    'django.contrib.admindocs',
     'django.contrib.admin',
     'ftw.router',
 )

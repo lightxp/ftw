@@ -1,0 +1,1 @@
+delete from router_ulice where id > 3;

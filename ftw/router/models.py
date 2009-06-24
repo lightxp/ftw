@@ -17,6 +17,7 @@ class Linie(models.Model):
     przystanek_poczatkowy = models.ForeignKey('Przystanki', related_name="%(class)s_related")
     przystanek_koncowy = models.ForeignKey('Przystanki', related_name="%(class)ss_related")
     trasa = models.ForeignKey('Trasy', related_name="%(class)sr_related")
+    typ = models.ForeignKey('TypTrasy', related_name="typ_trasy") 
     
     class Meta:
         verbose_name_plural = "Linie"
@@ -30,6 +31,7 @@ class Przystanki(models.Model):
     lat = models.DecimalField(max_digits=10, decimal_places=8)
     lng = models.DecimalField(max_digits=10, decimal_places=8)
     nazwa_pomocnicza = models.CharField(max_length=100, blank=True)
+    typ = models.ManyToManyField('TypTrasy') 
     
     class Meta:
         verbose_name_plural = "Przystanki"
@@ -80,3 +82,12 @@ class Rozklad(models.Model):
     def __unicode__(self):
         return "%s:%s" % (self.godzina, self.minuta)
     
+class TypTrasy(models.Model):
+    kod = models.CharField(max_length=2)
+    nazwa = models.CharField(max_length=20)
+    
+    def __unicode__(self):
+        return self.nazwa
+    
+    class Meta:
+        verbose_name_plural = "Typy Tras"        

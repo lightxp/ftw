@@ -82,4 +82,5 @@ INSTALLED_APPS = (
     'django.contrib.sites',
     'django.contrib.admin',
     'ftw.router',
+    'ftw.importer',
 )

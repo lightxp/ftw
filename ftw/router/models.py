@@ -14,9 +14,7 @@ class Ulice(models.Model):
 class Linie(models.Model):
     kod = models.CharField(max_length=20)
     nazwa_linii = models.CharField(max_length=200)
-    przystanek_poczatkowy = models.ForeignKey('Przystanki', related_name="%(class)s_related")
-    przystanek_koncowy = models.ForeignKey('Przystanki', related_name="%(class)ss_related")
-    trasa = models.ForeignKey('Trasy', related_name="%(class)sr_related")
+    trasa = models.ManyToManyField('Trasy')
     typ = models.ForeignKey('TypTrasy', related_name="typ_trasy") 
     
     class Meta:
@@ -24,6 +22,9 @@ class Linie(models.Model):
     
     def __unicode__(self):
         return u'%s (%s)' % (self.nazwa_linii, self.kod)
+    
+    def getname(self):
+        return u'%s' % (self.kod)
 
 class Przystanki(models.Model):     
     kod = models.CharField(max_length=20)
@@ -59,7 +60,10 @@ class Trasy(models.Model):
         verbose_name_plural = "Trasy"
 
     def __unicode__(self):
-        return u"%d (%d min)" % (self.przystanki.count(),self.dlugosc_trasy)
+        p = self.linie_set.all()[:1]
+        for l in p:
+            return u"%s %d/(%d min)" % (l.getname(), self.przystanki.count(), self.dlugosc_trasy)
+        return u"Brak przypisania do linii; %d przystanki/(%d min)" % (self.przystanki.count(), self.dlugosc_trasy)
     
 class RozkladPrzystanek(models.Model):
     linia = models.ForeignKey(Linie)
@@ -77,7 +81,7 @@ class Rozklad(models.Model):
     minuta = models.CharField(max_length=2)
     dzien_powszedni = models.BooleanField()
     niedziela = models.BooleanField()
-    nocny = models.BooleanField()
+    sobota = models.BooleanField()
     rozklad = models.ForeignKey(RozkladPrzystanek, related_name="%(class)s_related")
     
     def __unicode__(self):
@@ -91,4 +95,5 @@ class TypTrasy(models.Model):
         return self.nazwa
     
     class Meta:
-        verbose_name_plural = "Typy Tras"        
+        verbose_name_plural = "Typy Tras"
+                

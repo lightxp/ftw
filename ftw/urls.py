@@ -13,7 +13,8 @@ urlpatterns = patterns('',
     #(r'^admin/doc/', include('django.contrib.admindocs.urls')),
 
     # Uncomment the next line to enable the admin:
-    (r'^admin/router/importprzystankow/', 'ftw.router.views.importuj_przystanek'),
-    (r'^admin/router/importulic/', 'ftw.router.views.importuj'),
+    (r'^admin/importer/importprzystankow/', 'ftw.importer.admin_views.importuj_przystanek'),
+    (r'^admin/importer/importulic/', 'ftw.importer.admin_views.importuj_ulice'),
+    (r'^admin/importer/importtras/', 'ftw.importer.admin_views.importuj_trasy'),
     (r'^admin/', include(admin.site.urls)),
 )

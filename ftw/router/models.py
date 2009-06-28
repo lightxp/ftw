@@ -21,7 +21,7 @@ class Linie(models.Model):
         verbose_name_plural = "Linie"
     
     def __unicode__(self):
-        return u'%s (%s)' % (self.nazwa_linii, self.kod)
+        return u'%s' % (self.kod)
     
     def getname(self):
         return u'%s' % (self.kod)

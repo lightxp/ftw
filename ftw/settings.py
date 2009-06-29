@@ -64,6 +64,7 @@ MIDDLEWARE_CLASSES = (
     'django.middleware.common.CommonMiddleware',
     'django.contrib.sessions.middleware.SessionMiddleware',
     'django.contrib.auth.middleware.AuthenticationMiddleware',
+    'django.middleware.transaction.TransactionMiddleware',
 )
 
 ROOT_URLCONF = 'ftw.urls'
@@ -83,4 +84,5 @@ INSTALLED_APPS = (
     'django.contrib.admin',
     'ftw.router',
     'ftw.importer',
+    'ftw.exporter',
 )

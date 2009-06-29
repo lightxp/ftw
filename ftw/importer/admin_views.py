@@ -8,32 +8,44 @@ from django.contrib.admin.views.decorators import staff_member_required
 
 from xml.sax import make_parser
 from xml.sax.handler import ContentHandler
+from datetime import datetime
+from django.db import transaction
 
 @staff_member_required
+@transaction.commit_manually
 def importuj_ulice(request):
     import csv
+
+    print datetime.now()
+    
     listaUlic = csv.reader(open(settings.IMPORT_DATA_ROOT + 'poznan_ulice.csv'), quotechar='"')
     Ulice.objects.all().delete()
     zlych = 0;
-
+    print datetime.now()
+    
     for row in listaUlic:
       try:  
           u = Ulice(nazwa=row[0])
           u.save()
       except IndexError:
           zlych += 1    
-
+    
+    print datetime.now()
+    transaction.commit()
     return render_to_response('admin/import/status.html', {
                                                 'ile': listaUlic.line_num - zlych,
                                                 'czego': 'ulic',
                                                  })
 
 @staff_member_required
+@transaction.commit_manually
 def importuj_przystanek(request):
     import csv
+    print datetime.now()
     listaPrzystankow = csv.reader(open(settings.IMPORT_DATA_ROOT + 'przystanki.csv'), quotechar='"')
     zlych = 0;
     Przystanki.objects.all().delete()
+    print datetime.now()
     
     for row in listaPrzystankow:
       try:  
@@ -46,13 +58,16 @@ def importuj_przystanek(request):
           p.save()    
       except IndexError:
           zlych += 1    
-
+    
+    transaction.commit()
+    print datetime.now()
     return render_to_response('admin/import/status.html', {
                                                 'ile': listaPrzystankow.line_num - zlych,
                                                 'czego': 'przystankow',
                                                  })
 
 @staff_member_required
+@transaction.commit_manually
 def importuj_trasy(request):
     #import trasy z pliku XML wygenerowanego wg standardu MPK Poznan
     rozklad_file_name = settings.IMPORT_DATA_ROOT + 'Rozklady.xml'
@@ -63,16 +78,18 @@ def importuj_trasy(request):
         Trasy.objects.all().delete()
         Rozklad.objects.all().delete()
         RozkladPrzystanek.objects.all().delete()
-          
+         
         parser = make_parser()
         parser.setContentHandler(trasaHandler())
         parser.parse(rozklad_file_name);
         status = True
+        transaction.commit()
     except:    
         status = False
 
     event = Events(file_name=rozklad_file_name, state=status)
     event.save()
+    transaction.commit()
     
     return render_to_response('admin/import/status.html', {
                                                 'czego': 'tras',
@@ -139,7 +156,7 @@ class trasaHandler(ContentHandler):
             self.inStop = True
             self.stopKod = attributes.getValue('id') 
             self.stopName = attributes.getValue('name') 
-            
+
             #update nazwy przystanku wg kodu
             try:
                 p = Przystanki.objects.get(kod=self.stopKod)
@@ -154,7 +171,7 @@ class trasaHandler(ContentHandler):
                 p.typ.add(tempTyp)
                 p.save()
                 self.stopId = p.id
-
+            
             #dodaj przystanek do trasy
             self.pp = PrzystanekPozycja(przystanek = p, pozycja = self.stopPosition, czas_dojazdu = 0)
             self.pp.save()
@@ -170,6 +187,7 @@ class trasaHandler(ContentHandler):
             self.inHour = True
             self.current_hour = attributes.getValue('value')
             self.current_hour_key = self.current_hour
+            
             if int(self.current_hour) < 10:
                 self.current_hour_key = "0%s" % (self.current_hour)
             self.valid[self.current_hour_key] = []    
@@ -178,7 +196,7 @@ class trasaHandler(ContentHandler):
             #minuty do godziny
             type = attributes.getValue('type')
             minuta_xml = attributes.getValue('value')
-            
+
             dp = False
             nd = False
             s = False
@@ -216,7 +234,8 @@ class trasaHandler(ContentHandler):
             #ustaw 1 na pozycji  
             self.stopPosition = 1
             #zapisujemy trase i dodajemy ja do linii
-            self.trasa.dlugosc_trasy = self.calkowita_trasa  
+            self.trasa.dlugosc_trasy = self.calkowita_trasa 
+            self.calkowita_trasa = 0 
             self.trasa.save()
             self.linia.trasa.add(self.trasa)
             
@@ -226,31 +245,36 @@ class trasaHandler(ContentHandler):
             tempStamp = self.lastStamp
             godziny = self.valid.keys()
             godziny.sort()
-            godziny.reverse()
-            
-            if len(self.valid[godziny[0]]) == 0:
-                temp = self.valid[godziny[1]]
-                hour = godziny[1]
-            else:
-                temp = self.valid[godziny[0]]   
-                hour = godziny[0] 
-
-            temp.reverse()
-            self.lastStamp = int(hour) *60 + int(temp[0])  
+            #godziny.reverse()
+            try:
+                if len(self.valid[godziny[0]]) == 0:
+                    temp = self.valid[godziny[1]]
+                    hour = godziny[1]
+                else:
+                    temp = self.valid[godziny[0]]   
+                    hour = godziny[0]             
+                #temp.reverse()
+                self.lastStamp = int(hour) *60 + int(temp[0])
+            except:
+                self.lastStamp = 2   
+                   
             if tempStamp == 0:
                 tempStamp = self.lastStamp
                 
             czas_dojazdu = self.lastStamp - tempStamp
-            print "%s min; linia:%s przystanek: %s" % (czas_dojazdu,self.lineNumber, self.stopKod)
-            if czas_dojazdu < 0:
-                czas_dojazdu = 0
+            
+            if czas_dojazdu < 0 or czas_dojazdu > 9:
+                czas_dojazdu = 1
+                
             self.valid = {}
+            self.inDP = False
             self.calkowita_trasa += czas_dojazdu
             self.pp.czas_dojazdu = czas_dojazdu
             self.pp.save()
             #zapisz rozklady do przystanku
             self.stopRozklad.save()
-
+            print "%s min; linia:%s przystanek: %s" % (czas_dojazdu,self.lineNumber, self.stopKod)
+            
         if name == 'hour':
             #przystanek do konkretnej direction/linii
             self.inHour = False

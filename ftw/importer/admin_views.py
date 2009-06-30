@@ -70,7 +70,7 @@ def importuj_przystanek(request):
 @transaction.commit_manually
 def importuj_trasy(request):
     #import trasy z pliku XML wygenerowanego wg standardu MPK Poznan
-    rozklad_file_name = settings.IMPORT_DATA_ROOT + 'Rozklady.xml'
+    rozklad_file_name = settings.IMPORT_DATA_ROOT + 'Rozklady_small.xml'
     # usuniecie wszystkich danych o trasach oraz rozkladach i liniach
     try: 
         Linie.objects.all().delete()  
@@ -173,6 +173,8 @@ class trasaHandler(ContentHandler):
                 self.stopId = p.id
             
             #dodaj przystanek do trasy
+            p.linia.add(self.linia)
+            p.save()
             self.pp = PrzystanekPozycja(przystanek = p, pozycja = self.stopPosition, czas_dojazdu = 0)
             self.pp.save()
             self.trasa.przystanki.add(self.pp)

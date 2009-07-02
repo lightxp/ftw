@@ -1,0 +1,19 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01//EN">
+<html lang="en">
+<head>
+    <title>{% block title %}FindTheWay{% endblock %} {% block section_title %}{% endblock %}</title>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8">
+
+    <script type="text/javascript" src="{{ MEDIA_URL }}js/jquery-1.3.2.min.js"></script>
+    <script type="text/javascript" src="{{ MEDIA_URL }}js/jquery.tokeninput.js"></script>
+    <script type="text/javascript" src="{{ MEDIA_URL }}js/printr.js"></script>
+
+    <link rel="stylesheet" href="{{ MEDIA_URL }}css/token-input.css" type="text/css" />    
+    {% block own_scripts %}{% endblock %}
+</head>
+<body>
+    {% block content %}{% endblock %}
+    {% block footer %}
+    {% endblock %}
+</body>
+</html>

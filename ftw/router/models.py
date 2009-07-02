@@ -1,3 +1,6 @@
+# -*- coding: utf-8 -*- 
+import sys
+
 from django.db import models
 
 # Create your models here.

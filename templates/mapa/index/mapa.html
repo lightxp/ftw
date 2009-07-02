@@ -1,0 +1,23 @@
+{% extends "base/base_mapa.html" %}
+
+{% block section_title %}Mapa{% endblock %}
+
+{% block own_scripts %}
+    <script type="text/javascript">
+	var tokens = [];
+    $(document).ready(function() {
+        $("#tokenize").tokenInput("/exporter/podpowiedz/", {
+            hintText: "Nazwa przystanku/ulicy",
+            noResultsText: "Brak wynikow",
+            searchingText: "Trwa wyszukiwanie..."
+        });
+    });
+	
+    </script>
+{% endblock %}	
+
+{% block mapa_content %}
+	<div>
+        <input type="text" id="tokenize" name="blah" />
+    </div>
+{% endblock %}

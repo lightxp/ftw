@@ -7,6 +7,26 @@ import simplejson as json
 from django.utils.encoding import iri_to_uri
 from django.utils.http import urlquote
 
+def completeBusStopsXML(request):
+    import xml.dom.minidom
+    doc = xml.dom.minidom.Document()
+    przystanki = Przystanki.objects.all()
+    stor_przystanki = doc.createElement('markers')
+    
+    for przystanek in przystanki:
+        if(przystanek.lat > 0 and przystanek.lng > 0):
+            stor_przystanek = doc.createElement('marker')
+            stor_przystanek.setAttribute('name',przystanek.nazwa_pomocnicza)
+            stor_przystanek.setAttribute('lat',str(przystanek.lat))
+            stor_przystanek.setAttribute('lng',str(przystanek.lng))
+            stor_przystanek.setAttribute('id',str(przystanek.id))                    
+            stor_przystanki.appendChild(stor_przystanek)
+    
+    doc.appendChild(stor_przystanki)
+    response = HttpResponse(mimetype='text/xml')
+    response.write(doc.toxml())
+
+    return response
 
 def completeBusStops(request):
     #request.encoding = 'iso-8859-2'

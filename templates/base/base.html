@@ -9,9 +9,10 @@
     <script type="text/javascript" src="{{ MEDIA_URL }}js/printr.js"></script>
 
     <link rel="stylesheet" href="{{ MEDIA_URL }}css/token-input.css" type="text/css" />    
+    <link rel="stylesheet" href="{{ MEDIA_URL }}css/default.css" type="text/css" />    
     {% block own_scripts %}{% endblock %}
 </head>
-<body>
+<body {% block bodyblock %}{% endblock %}>
     {% block content %}{% endblock %}
     {% block footer %}
     {% endblock %}

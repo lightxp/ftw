@@ -1,0 +1,43 @@
+body {
+	margin: 0 auto;
+	padding: 0;
+	height: 100%;
+	font-size: 68.75%; /* 1em = 11px */
+	font-family: Arial, Tahoma, Sans-serif;
+}
+
+div#top_box{
+	height: 50px;
+	width: 100%;
+	margin: 0;
+	left:0;
+}
+div#map{
+	position: absolute;
+	left: 0px;
+	width: 100%;
+	height: 100%;
+}
+
+div#menu{
+	width: 200px;
+}
+
+.fl{
+	float: left;
+}
+
+.fr{
+	float: right;
+}
+
+.clear{
+	clear: both;
+	width:0;
+	height:0;
+	margin:0;
+	padding: 0;	
+}
+div.inputform{
+	width: 250px;
+}

@@ -7,10 +7,10 @@ import simplejson as json
 from django.utils.encoding import iri_to_uri
 from django.utils.http import urlquote
 
-def completeBusStopsXML(request):
+def completeBusStopsXML(request, typIn):
     import xml.dom.minidom
     doc = xml.dom.minidom.Document()
-    przystanki = Przystanki.objects.all()
+    przystanki = Przystanki.objects.filter(typ__kod=typIn)
     stor_przystanki = doc.createElement('markers')
     
     for przystanek in przystanki:
@@ -19,7 +19,8 @@ def completeBusStopsXML(request):
             stor_przystanek.setAttribute('name',przystanek.nazwa_pomocnicza)
             stor_przystanek.setAttribute('lat',str(przystanek.lat))
             stor_przystanek.setAttribute('lng',str(przystanek.lng))
-            stor_przystanek.setAttribute('id',str(przystanek.id))                    
+            stor_przystanek.setAttribute('id',str(przystanek.id)) 
+            stor_przystanek.setAttribute('linie',"|".join(przystanek.linia.values_list('nazwa_linii',flat=True)))                   
             stor_przystanki.appendChild(stor_przystanek)
     
     doc.appendChild(stor_przystanki)
@@ -72,3 +73,4 @@ def completeBusStops(request):
     response.write(output)
 
     return response
+    

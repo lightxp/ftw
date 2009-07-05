@@ -10,18 +10,33 @@
 		var tokens = [];
 		var map = '';
 		var BusmarkersArray = [];
+		var TrammarkersArray = [];
+		var NightmarkersArray = [];
 		var cluster = '';
+		var geocoder = null;
+
+		var appKontekst = {
+			'visibleBus'	:	0,
+			'visibleTram'	:	0,
+			'visibleNight'	:	0,
+			'fromMarker'	:	'',
+			'toMarker'		:	'',
+			'zoomLvl'		:	13,
+			'zoomLvlDetail'	:	17
+		};
 		
 	    $(document).ready(function() {
 	        $("#from").tokenInput("/exporter/podpowiedz/", {
 	            hintText: "Nazwa przystanku/ulicy",
 	            noResultsText: "Brak wynikow",
-	            searchingText: "Trwa wyszukiwanie..."
+	            searchingText: "Trwa wyszukiwanie...",
+				direction: "From"
 	        });
 	        $("#to").tokenInput("/exporter/podpowiedz/", {
 	            hintText: "Nazwa przystanku/ulicy",
 	            noResultsText: "Brak wynikow",
-	            searchingText: "Trwa wyszukiwanie..."
+	            searchingText: "Trwa wyszukiwanie...",
+				direction: "To"
 	        });
 	    });
     </script>
@@ -40,9 +55,16 @@
 			Do: <input type="text" id="to" name="to" />
 		</div>
 		<div class="fl" id="menu">
-			<a href="#" onclick="showBusStops();return false;">Pokaż przystanki autobusowe</a><br>
-			<a href="#" onclick="showTramStops();return false;">Pokaż przystanki tramwajowe</a><br>
-			<a href="#" onclick="showNightStops();return false;">Pokaż przystanki nocne</a>
+			<a href="#" onclick="showBusStops();return false;" id="showBusStop">Pokaż przystanki autobusowe</a>
+			<a href="#" onclick="hideStops('A');return false;" id="hideBusStop" style="display:none;">Ukryj przystanki autobusowe</a>
+			<br>
+			
+			<a href="#" onclick="showTramStops();return false;" id="showTramStop">Pokaż przystanki tramwajowe</a>
+			<a href="#" onclick="hideStops('T');return false;" id="hideTramStop" style="display:none;">Ukryj przystanki tramwajowe</a>
+			<br>
+			
+			<a href="#" onclick="showNightStops();return false;" id="showNightStop">Pokaż przystanki nocne</a>
+			<a href="#" onclick="hideStops('N');return false;" id="hideNightStop" style="display:none;">Ukryj przystanki nocne</a>			
 		</div>	
 		<div class="clear"></div>			
 	</div>	

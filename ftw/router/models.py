@@ -28,7 +28,7 @@ class Linie(models.Model):
     
     def getname(self):
         return u'%s' % (self.kod)
-
+    
 class Przystanki(models.Model):     
     kod = models.CharField(max_length=20)
     ulica = models.ForeignKey(Ulice, blank=True, null=True)
@@ -67,6 +67,18 @@ class Trasy(models.Model):
         for l in p:
             return u"%s %d/(%d min)" % (l.getname(), self.przystanki.count(), self.dlugosc_trasy)
         return u"Brak przypisania do linii; %d przystanki/(%d min)" % (self.przystanki.count(), self.dlugosc_trasy)
+
+    def getFirst(self):
+        p = self.przystanki.all().order_by('pozycja')[:1]
+        for l in p:
+            return l.przystanek.nazwa_pomocnicza
+        return p
+    
+    def getLast(self):
+        p = self.przystanki.all().order_by('-pozycja')[:1]
+        for l in p:
+            return l.przystanek.nazwa_pomocnicza
+        return p
     
 class RozkladPrzystanek(models.Model):
     linia = models.ForeignKey(Linie)
@@ -77,11 +89,11 @@ class RozkladPrzystanek(models.Model):
         verbose_name_plural = "Rozklad->przystanek"
 
     def __unicode__(self):
-        return u"%s :linia %s)" % (self.przystanek, self.linia) 
+        return u"%s: linia %s" % (self.przystanek, self.linia) 
     
 class Rozklad(models.Model):
-    godzina = models.CharField(max_length=2)
-    minuta = models.CharField(max_length=2)
+    godzina = models.IntegerField()
+    minuta = models.IntegerField()
     dzien_powszedni = models.BooleanField()
     niedziela = models.BooleanField()
     sobota = models.BooleanField()
@@ -89,6 +101,9 @@ class Rozklad(models.Model):
     
     def __unicode__(self):
         return "%s:%s" % (self.godzina, self.minuta)
+    
+    class Meta:
+        ordering = ["godzina","minuta"]
     
 class TypTrasy(models.Model):
     kod = models.CharField(max_length=2)

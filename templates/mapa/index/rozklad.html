@@ -1,0 +1,29 @@
+{% extends "base/base_mapa.html" %}
+
+{% block section_title %}Rozkład{% endblock %}
+
+{% block mapa_content %}
+<h2>{{ nazwa }}</h2>
+Trasa: {{ pierwszy }} - {{ ostatni }}<br>
+<div class="fl">
+	<h3>Dni powszednie</h3>
+		{% for key,item in rozklad_pp.items %}
+	    	{{ key }}: {{ item }}<br>
+		{% endfor %}
+</div>
+	
+<div class="fl">
+	<h3>Soboty</h3>
+		{% for key,item in rozklad_sb.items %}
+	    	{{ key }}: {{ item }}<br>
+		{% endfor %}			
+</div>
+
+<div class="fl">
+	<h3>Niedziele i święta</h3>
+		{% for key,item in rozklad_nd.items %}
+	    	{{ key }}: {{ item }}<br>
+		{% endfor %}			
+</div>
+<div class="clear"></div>
+{% endblock %}

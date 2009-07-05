@@ -262,6 +262,9 @@ $.TokenList = function (input, settings) {
 			'lat':	li_data.lat,
 			'lng':	li_data.lng,
 		});
+
+		putMarker(settings.direction,li_data.lat,li_data.lng,li_data.name);
+		
         // Clear input box and make sure it keeps focus
         input_box
             .val(li_data.name)
@@ -400,7 +403,7 @@ $.TokenList = function (input, settings) {
                         select_dropdown_item(this_li);
                     }
         
-                    $.data(this_li.get(0), "tokeninput", {"id": results[i].id, "name": results[i].name});
+                    $.data(this_li.get(0), "tokeninput", {"id": results[i].id, "name": results[i].name, "lat": results[i].lat, "lng": results[i].lng});
                 }
             }
 
@@ -409,7 +412,7 @@ $.TokenList = function (input, settings) {
 
         } else {
             dropdown
-                .html("<p>"+settings.noResultsText+"</p>")
+                .html("<p>"+settings.noResultsText+"<br><a href='#' onclick=\"putMarker('"+settings.direction+"','','','"+query+"');return false;\">Szukaj na mapie</a></p>")
                 .show();
         }
     }

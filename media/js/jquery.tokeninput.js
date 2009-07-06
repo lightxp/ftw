@@ -58,6 +58,8 @@ $.TokenList = function (input, settings) {
     // Keep track of the timeout
     var timeout;
     
+	var returned_list = 0;
+	
     // Create a new text input an attach keyup events
     var input_box = $("<input type=\"text\">")
         .css({
@@ -67,7 +69,7 @@ $.TokenList = function (input, settings) {
             show_dropdown_hint();
         })
         .blur(function () {
-            if(!selected_dropdown_item) {
+            if(!selected_dropdown_item && returned_list > 0) {
                 hide_dropdown();
             }
         })
@@ -177,7 +179,6 @@ $.TokenList = function (input, settings) {
                 return false;
             } else {
                 input_box.focus();
-            
                 if(selected_token) {
                     deselect_token($(selected_token), POSITION.END);
                 }
@@ -411,8 +412,9 @@ $.TokenList = function (input, settings) {
             dropdown_ul.slideDown("fast");
 
         } else {
+			returned_list = 0;
             dropdown
-                .html("<p>"+settings.noResultsText+"<br><a href='#' onclick=\"putMarker('"+settings.direction+"','','','"+query+"');return false;\">Szukaj na mapie</a></p>")
+                .html("<p>"+settings.noResultsText+"<br><a href='#' onclick=\"putMarker('"+settings.direction+"','','','"+query+"');$('.token-input-dropdown').empty().hide();return false;\">Szukaj na mapie</a></p>")
                 .show();
         }
     }

@@ -74,3 +74,34 @@ def completeBusStops(request):
 
     return response
     
+def completeNearest(request, lat, lng, distance_max):
+    import xml.dom.minidom
+    doc = xml.dom.minidom.Document()
+    stor_przystanki = doc.createElement('markers')
+
+    przystanki = Przystanki.objects.extra(
+                                   select={
+                                           'distance': " 3959 * acos( cos( radians(%s) ) * cos( radians( lat ) ) * cos( radians( lng ) - radians(%s) ) + sin( radians(%s) ) * sin( radians( lat ) ) ) " % (lat,lng,lat)}
+                                   ).extra(
+                                           order_by = ['distance']
+                                           ).all()
+   
+    for przystanek in przystanki:
+        if przystanek.distance <= distance_max and przystanek.distance > 0:
+            if(przystanek.lat > 0 and przystanek.lng > 0):
+                stor_przystanek = doc.createElement('marker')
+                stor_przystanek.setAttribute('name',przystanek.nazwa_pomocnicza)
+                stor_przystanek.setAttribute('lat',str(przystanek.lat))
+                stor_przystanek.setAttribute('lng',str(przystanek.lng))
+                stor_przystanek.setAttribute('id',str(przystanek.id)) 
+                stor_przystanek.setAttribute('distance',str(przystanek.distance)) 
+                stor_przystanek.setAttribute('linie',"|".join(przystanek.linia.values_list('nazwa_linii',flat=True)))                   
+                stor_przystanki.appendChild(stor_przystanek)
+    
+    
+    doc.appendChild(stor_przystanki)
+    response = HttpResponse(mimetype='text/xml')
+    response.write(doc.toxml())
+
+    return response
+       

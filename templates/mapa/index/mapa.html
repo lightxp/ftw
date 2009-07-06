@@ -12,7 +12,9 @@
 		var BusmarkersArray = [];
 		var TrammarkersArray = [];
 		var NightmarkersArray = [];
+		var NearestmarkersArray = [];
 		var cluster = '';
+		var circle;
 		var geocoder = null;
 
 		var appKontekst = {
@@ -22,7 +24,8 @@
 			'fromMarker'	:	'',
 			'toMarker'		:	'',
 			'zoomLvl'		:	13,
-			'zoomLvlDetail'	:	17
+			'zoomLvlDetail'	:	17,
+			'circleRadius'	:	0.7
 		};
 		
 	    $(document).ready(function() {

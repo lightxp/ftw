@@ -155,7 +155,8 @@ function putMarker(direction,lat,lng,name, bus_id){
 		return;	
 		}
 	}
-
+	
+	var nearest = '';
 	var blueIcon = new GIcon(G_DEFAULT_ICON);
 	blueIcon.image = "http://www.google.com/intl/en_us/mapfiles/ms/micons/blue-dot.png";
 	var redIcon = new GIcon(G_DEFAULT_ICON);
@@ -165,12 +166,14 @@ function putMarker(direction,lat,lng,name, bus_id){
 		if (appKontekst.toMarker != '') {
 			map.removeOverlay(appKontekst.toMarker);
 		}			
-
 		appKontekst.toMarker = new GMarker(new GLatLng(lat, lng), {
 			icon: blueIcon
 		});
+
+		nearest = "<br><a href=\"javascript:showNearest("+lat+","+lng+");\">pokaż przystanki w okolicy</a>";
+
 		GEvent.addListener(appKontekst.toMarker, "click", function(){
-			appKontekst.toMarker.openInfoWindowHtml("Do: " + name);
+			appKontekst.toMarker.openInfoWindowHtml("Do: " + name + nearest);
 		});
 		map.addOverlay(appKontekst.toMarker);
 		map.setCenter(new GLatLng(lat, lng), appKontekst.zoomLvl);
@@ -189,4 +192,64 @@ function putMarker(direction,lat,lng,name, bus_id){
 		map.addOverlay(appKontekst.fromMarker);
 		map.setCenter(new GLatLng(lat, lng), appKontekst.zoomLvl);
 	}	
+}
+
+function showNearest(lat,lng){
+	var searchUrl = '/exporter/przystanki/najblizsze/'+lat+'/'+lng+'/';
+
+    GDownloadUrl(searchUrl, function(data, responseCode) {
+		if (responseCode == 200) {
+			var xml = GXml.parse(data);
+			NearestmarkersArray = [];
+			var markers = xml.documentElement.getElementsByTagName("marker");
+
+			if (markers.length > 0) {
+				for (var i = 0; i < markers.length; i++) {
+					var name = markers[i].getAttribute("name");
+					var id = markers[i].getAttribute("id");
+					var linie = markers[i].getAttribute("linie");
+					var point = new GLatLng(parseFloat(markers[i].getAttribute("lat")), parseFloat(markers[i].getAttribute("lng")));
+					
+					NearestmarkersArray.push(newMarker(point, name, id, linie));
+				}
+				showPointers(NearestmarkersArray);
+				doDrawCircle(lat,lng);
+				map.setZoom(appKontekst.zoomLvlDetail);
+			}	
+		}
+     });
+}
+
+function doDrawCircle(lat,lng){
+	if (circle) {
+		map.removeOverlay(circle);
+	}
+	
+	var bounds = new GLatLngBounds();	
+	var circlePoints = Array();
+
+	with (Math) {
+		var d = appKontekst.circleRadius/6378.8;	// radians
+
+		var lat1 = (PI/180)* lat; // radians
+		var lng1 = (PI/180)* lng; // radians
+
+		for (var a = 0 ; a < 361 ; a++ ) {
+			var tc = (PI/180)*a;
+			var y = asin(sin(lat1)*cos(d)+cos(lat1)*sin(d)*cos(tc));
+			var dlng = atan2(sin(tc)*sin(d)*cos(lat1),cos(d)-sin(lat1)*sin(y));
+			var x = ((lng1-dlng+PI) % (2*PI)) - PI ; // MOD function
+			var point = new GLatLng(parseFloat(y*(180/PI)),parseFloat(x*(180/PI)));
+			circlePoints.push(point);
+			bounds.extend(point);
+		}
+
+		if (d < 1.5678565720686044) {
+			circle = new GPolygon(circlePoints, '#000000', 2, 1, '#000000', 0.25);	
+		}
+		else {
+			circle = new GPolygon(circlePoints, '#000000', 2, 1);	
+		}
+		map.addOverlay(circle); 
+	}
 }

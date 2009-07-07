@@ -1,3 +1,6 @@
+/*
+ * inicjalizacja mapy
+ */
 function initialize() {
   if (GBrowserIsCompatible()) {
     map = new GMap2(document.getElementById("map"));
@@ -12,12 +15,18 @@ function initialize() {
   }
 }
 
+/*
+ * resize diva + start inicjalizacji mapy
+ */
 function start(){
 	var newh = $(window).height();
-	$('#map').height(newh-50);
+	$('#map').height(newh-75);
 	initialize();
 }
 
+/*
+ * pokazanie przystanków autobusowych
+ */
 function showBusStops(){
 	var searchUrl = '/exporter/przystanki/autobusy/';
 
@@ -44,6 +53,9 @@ function showBusStops(){
      });	
 }
 
+/*
+ * pokazanie przystankow tramwajowych
+ */
 function showTramStops(){
 	var searchUrl = '/exporter/przystanki/tramwaje/';
 
@@ -70,6 +82,9 @@ function showTramStops(){
      });	
 }
 
+/*
+ * pokazanie przystankow nocnych
+ */
 function showNightStops(){
 	var searchUrl = '/exporter/przystanki/nocne/';
 
@@ -96,6 +111,9 @@ function showNightStops(){
      });		
 }
 
+/*
+ * dodanie markera z przystankiem
+ */
 function newMarker(point, name, id, linie) {
 	var marker = new GMarker(point);
 	GEvent.addListener(marker, 'click', function() {
@@ -105,17 +123,28 @@ function newMarker(point, name, id, linie) {
 		for(indeks in linie_temp){
 			html = html + '<a href="/mapa/rozklad/'+id+'/'+linie_temp[indeks]+'/" target="_blank" title="Rozkład linii '+linie_temp[indeks]+'">' + linie_temp[indeks] + '</a>' + ' ';
 		}
+		if (appKontekst.fromMarker) {
+			html = html + "<br><a href=\"javascript:showWay('From'," + point.lat() + "," + point.lng() + ");\">pokaż drogę na ten przystanek</a>";
+		}	
+		if (appKontekst.toMarker) {
+			html = html + "<br><a href=\"javascript:showWay('To'," + point.lat() + "," + point.lng() + ");\">pokaż drogę z tego przystanku</a>";
+		}	
 		marker.openInfoWindowHtml(html);
 	});
 	return marker;
 }
 
-
+/*
+ * dodanie pointerow do clustera
+ */
 function showPointers(markersIn){
 	cluster.addMarkers(markersIn);
 	cluster.refresh(true);
 }
 
+/*
+ * ukrycie punktow z mapy
+ */
 function hideStops(type){
 	cluster.removeMarkers();
 	if(appKontekst.visibleBus == 1 && type != 'A'){
@@ -127,6 +156,9 @@ function hideStops(type){
 	if(appKontekst.visibleNight == 1 && type != 'N'){
 		cluster.addMarkers(NightmarkersArray);
 	}
+	if(appKontekst.visibleNearest == 1 && type == 'Nearest'){
+		cluster.addMarkers(NearestmarkersArray);
+	}	
 	switch(type){
 		case 'A':
 				$('#showBusStop').show();
@@ -140,12 +172,18 @@ function hideStops(type){
 				$('#showNightStop').show();
 				$('#hideNightStop').hide();
 				break;					
+		case 'Nearest':
+				$("#showNearest").show();
+				$(".hideNearest").hide();		
 		default:
 				break;					
 	}
 	cluster.refresh(true);
 }
 
+/*
+ * posadowienie pinezki Z/Do
+ */
 function putMarker(direction,lat,lng,name, bus_id){
 	if (lat == undefined || lng == undefined || lat == '' || lng == '') {
 		if (geocoder) {
@@ -156,7 +194,8 @@ function putMarker(direction,lat,lng,name, bus_id){
 		}
 	}
 	
-	var nearest = '';
+	var	nearest = "<br><a href=\"javascript:showNearest("+lat+","+lng+");\" id='showNearest'>pokaż przystanki w okolicy</a><a href=\"javascript:hideNearest();\" class='hideNearest' style='display:none;'>ukryj przystanki w okolicy</a>";
+
 	var blueIcon = new GIcon(G_DEFAULT_ICON);
 	blueIcon.image = "http://www.google.com/intl/en_us/mapfiles/ms/micons/blue-dot.png";
 	var redIcon = new GIcon(G_DEFAULT_ICON);
@@ -169,8 +208,6 @@ function putMarker(direction,lat,lng,name, bus_id){
 		appKontekst.toMarker = new GMarker(new GLatLng(lat, lng), {
 			icon: blueIcon
 		});
-
-		nearest = "<br><a href=\"javascript:showNearest("+lat+","+lng+");\">pokaż przystanki w okolicy</a>";
 
 		GEvent.addListener(appKontekst.toMarker, "click", function(){
 			appKontekst.toMarker.openInfoWindowHtml("Do: " + name + nearest);
@@ -187,13 +224,16 @@ function putMarker(direction,lat,lng,name, bus_id){
 			icon: redIcon
 		});
 		GEvent.addListener(appKontekst.fromMarker, "click", function(){
-			appKontekst.fromMarker.openInfoWindowHtml("Z: " + name);
+			appKontekst.fromMarker.openInfoWindowHtml("Z: " + name + nearest);
 		});
 		map.addOverlay(appKontekst.fromMarker);
 		map.setCenter(new GLatLng(lat, lng), appKontekst.zoomLvl);
 	}	
 }
 
+/*
+ * pokazanie najblizszych punktow
+ */
 function showNearest(lat,lng){
 	var searchUrl = '/exporter/przystanki/najblizsze/'+lat+'/'+lng+'/';
 
@@ -215,11 +255,16 @@ function showNearest(lat,lng){
 				showPointers(NearestmarkersArray);
 				doDrawCircle(lat,lng);
 				map.setZoom(appKontekst.zoomLvlDetail);
+				$("#showNearest").hide();
+				$(".hideNearest").show();
 			}	
 		}
      });
 }
 
+/*
+ * wyrysowanie kola o zadanej srednicy
+ */
 function doDrawCircle(lat,lng){
 	if (circle) {
 		map.removeOverlay(circle);
@@ -252,4 +297,59 @@ function doDrawCircle(lat,lng){
 		}
 		map.addOverlay(circle); 
 	}
+}
+
+/*
+ * ukrycie najblizszych punktow
+ */
+function hideNearest(){
+	if (circle) {
+		map.removeOverlay(circle);
+	}
+	hideStops('Nearest');	
+}
+
+/*
+ * pokazanie drogi na/z przystanku
+ */
+function showWay(direction,lat,lng){
+	var startPoint = [];
+	var endPoint = [];
+	
+	if(direction == 'To'){
+		endPoint['lat'] = appKontekst.toMarker.getLatLng().lat();
+		endPoint['lng'] = appKontekst.toMarker.getLatLng().lng();
+		startPoint['lat'] = lat;
+		startPoint['lng'] = lng;
+	}
+
+	if(direction == 'From'){
+		startPoint['lat'] = appKontekst.fromMarker.getLatLng().lat();
+		startPoint['lng'] = appKontekst.fromMarker.getLatLng().lng();
+		endPoint['lat'] = lat;
+		endPoint['lng'] = lng;
+	}
+	
+	directions = new GDirections(map, document.getElementById("route_msg"));
+	directions.load("from: "+startPoint['lat']+","+startPoint['lng']+" to: "+endPoint['lat']+","+endPoint['lng'], {travelMode:G_TRAVEL_MODE_WALKING, locale: 'pl_PL'});
+	
+	GEvent.addListener(directions,"load", function() {
+		appKontekst.tripDistance = directions.getDistance().meters;
+		appKontekst.tripDuration = directions.getDuration().seconds;
+    	$('#status .distance').html(directions.getDistance().html);
+    	$('#status .duration').html(directions.getDuration().html);
+		$('#hideDirection').show();
+	}); 
+}
+
+/*
+ * usuwa trase piesza
+ */
+function hideDirection(){
+	$('#hideDirection').hide();
+	appKontekst.tripDistance -= directions.getDistance().meters;
+	appKontekst.tripDuration -= directions.getDuration().seconds;
+	$('#status .distance').empty();
+	$('#status .duration').empty();	
+	directions.clear();
 }

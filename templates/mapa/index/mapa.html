@@ -16,16 +16,20 @@
 		var cluster = '';
 		var circle;
 		var geocoder = null;
+		var directions;
 
 		var appKontekst = {
 			'visibleBus'	:	0,
 			'visibleTram'	:	0,
 			'visibleNight'	:	0,
+			'visibleNearest'	:	0,
 			'fromMarker'	:	'',
 			'toMarker'		:	'',
 			'zoomLvl'		:	13,
 			'zoomLvlDetail'	:	17,
-			'circleRadius'	:	0.7
+			'circleRadius'	:	0.7,
+			'tripDistance'	:	0,	//meters
+			'tripDuration'	:	0	//seconds
 		};
 		
 	    $(document).ready(function() {
@@ -67,9 +71,18 @@
 			<br>
 			
 			<a href="#" onclick="showNightStops();return false;" id="showNightStop">Pokaż przystanki nocne</a>
-			<a href="#" onclick="hideStops('N');return false;" id="hideNightStop" style="display:none;">Ukryj przystanki nocne</a>			
-		</div>	
+			<a href="#" onclick="hideStops('N');return false;" id="hideNightStop" style="display:none;">Ukryj przystanki nocne</a>
+			<br>
+			
+			<a href="#" onclick="hideNearest();return false;" class='hideNearest' style='display:none;'>Ukryj przystanki w okolicy<br></a>			
+			<a href="#" onclick="hideDirection();return false;" id='hideDirection' style='display:none;'>Usuń trasę<br></a>			
+		</div>
+		<div class="fl" id="status">
+			Dystans: <span class="distance"></span><br>
+			Czas: <span class="duration"></span><br>
+		</div>
 		<div class="clear"></div>			
 	</div>	
-	<div id="map"></div>	
+	<div id="map"></div>
+	<div id="route_msg"></div>	
 {% endblock %}

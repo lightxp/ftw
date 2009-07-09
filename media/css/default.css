@@ -43,3 +43,17 @@ div#menu{
 div.inputform{
 	width: 250px;
 }
+
+div#msg{
+	width: 400px;
+	height: 30px;
+	top: 50%;
+	left: 30%;
+	z-index: 65535;
+	border: 1px solid green;
+	background-color: white;
+	opacity: 0.5;
+	position: absolute;
+	text-align: center;
+	padding-top: 20px;
+}

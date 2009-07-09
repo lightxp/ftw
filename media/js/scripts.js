@@ -11,7 +11,19 @@ function initialize() {
 	cluster = new ClusterMarker(map, {
    			clusterMarkerTitle: 'Kliknij aby przyblić i zobaczyć %count przystanki'
    	});
-
+	
+	GEvent.addListener(map,"tilesloaded", function() {
+		$('#msg').hide();
+	}); 
+	GEvent.addListener(map,"dragstart", function() {
+		$('#msg').show();
+	}); 
+	GEvent.addListener(map,"dragend", function() {
+		$('#msg').hide();
+	}); 
+	GEvent.addListener(map,"zoomend", function() {
+		$('#msg').show();
+	}); 
   }
 }
 
@@ -28,6 +40,7 @@ function start(){
  * pokazanie przystanków autobusowych
  */
 function showBusStops(){
+	$('#msg').show();
 	var searchUrl = '/exporter/przystanki/autobusy/';
 
     GDownloadUrl(searchUrl, function(data, responseCode) {
@@ -57,6 +70,7 @@ function showBusStops(){
  * pokazanie przystankow tramwajowych
  */
 function showTramStops(){
+	$('#msg').show();
 	var searchUrl = '/exporter/przystanki/tramwaje/';
 
     GDownloadUrl(searchUrl, function(data, responseCode) {
@@ -86,6 +100,7 @@ function showTramStops(){
  * pokazanie przystankow nocnych
  */
 function showNightStops(){
+	$('#msg').show();
 	var searchUrl = '/exporter/przystanki/nocne/';
 
     GDownloadUrl(searchUrl, function(data, responseCode) {
@@ -140,12 +155,14 @@ function newMarker(point, name, id, linie) {
 function showPointers(markersIn){
 	cluster.addMarkers(markersIn);
 	cluster.refresh(true);
+	$('#msg').hide();
 }
 
 /*
  * ukrycie punktow z mapy
  */
 function hideStops(type){
+	$('#msg').show();
 	cluster.removeMarkers();
 	if(appKontekst.visibleBus == 1 && type != 'A'){
 		cluster.addMarkers(BusmarkersArray);
@@ -179,6 +196,7 @@ function hideStops(type){
 				break;					
 	}
 	cluster.refresh(true);
+	$('#msg').hide();
 }
 
 /*
@@ -235,6 +253,7 @@ function putMarker(direction,lat,lng,name, bus_id){
  * pokazanie najblizszych punktow
  */
 function showNearest(lat,lng){
+	$('#msg').show();
 	var searchUrl = '/exporter/przystanki/najblizsze/'+lat+'/'+lng+'/';
 
     GDownloadUrl(searchUrl, function(data, responseCode) {
@@ -252,11 +271,11 @@ function showNearest(lat,lng){
 					
 					NearestmarkersArray.push(newMarker(point, name, id, linie));
 				}
-				showPointers(NearestmarkersArray);
 				doDrawCircle(lat,lng);
 				map.setZoom(appKontekst.zoomLvlDetail);
 				$("#showNearest").hide();
 				$(".hideNearest").show();
+				showPointers(NearestmarkersArray);
 			}	
 		}
      });
@@ -313,6 +332,7 @@ function hideNearest(){
  * pokazanie drogi na/z przystanku
  */
 function showWay(direction,lat,lng){
+	$('#msg').show();
 	var startPoint = [];
 	var endPoint = [];
 	
@@ -339,6 +359,7 @@ function showWay(direction,lat,lng){
     	$('#status .distance').html(directions.getDistance().html);
     	$('#status .duration').html(directions.getDuration().html);
 		$('#hideDirection').show();
+		$('#msg').hide();
 	}); 
 }
 

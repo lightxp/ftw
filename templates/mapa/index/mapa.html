@@ -78,11 +78,13 @@
 			<a href="#" onclick="hideDirection();return false;" id='hideDirection' style='display:none;'>Usuń trasę<br></a>			
 		</div>
 		<div class="fl" id="status">
+			Trasa:<br>
 			Dystans: <span class="distance"></span><br>
 			Czas: <span class="duration"></span><br>
 		</div>
 		<div class="clear"></div>			
 	</div>	
 	<div id="map"></div>
+	<div id="msg"><img src="{{ MEDIA_URL }}images/loader.gif"/></div>
 	<div id="route_msg"></div>	
 {% endblock %}

@@ -4,9 +4,6 @@ from django.shortcuts import render_to_response, get_object_or_404
 from ftw.router.models import Ulice, Przystanki
 import simplejson as json
 
-from django.utils.encoding import iri_to_uri
-from django.utils.http import urlquote
-
 def completeBusStopsXML(request, typIn):
     import xml.dom.minidom
     doc = xml.dom.minidom.Document()

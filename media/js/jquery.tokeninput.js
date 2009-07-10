@@ -65,6 +65,7 @@ $.TokenList = function (input, settings) {
         .css({
             outline: "none"
         })
+		.attr('id',settings.id)
         .focus(function () {
             show_dropdown_hint();
         })

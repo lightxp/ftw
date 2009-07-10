@@ -9,25 +9,44 @@
     <script type="text/javascript">
 		var tokens = [];
 		var map = '';
-		var BusmarkersArray = [];
-		var TrammarkersArray = [];
-		var NightmarkersArray = [];
-		var NearestmarkersArray = [];
+
+		var markersArray = {
+			bus			:	{
+				name	:	'bus',
+				url		:	'/exporter/przystanki/autobusy/',
+				visible	:	0,
+				markers	:	[]
+			},
+			tram		:	{
+				name	:	'tram',
+				url		:	'/exporter/przystanki/tramwaje/',
+				visible	:	0,
+				markers	:	[]
+			},
+			night		:	{
+				name	:	'night',
+				url		:	'/exporter/przystanki/nocne/',
+				visible	:	0,
+				markers	:	[]
+			},
+			nearest		:	{
+				name	:	'nearest',
+				url		:	'/exporter/przystanki/najblizsze/',
+				visible	:	0,
+				markers	:	[]
+			}
+		};
 		var cluster = '';
 		var circle;
 		var geocoder = null;
 		var directions;
 
 		var appKontekst = {
-			'visibleBus'	:	0,
-			'visibleTram'	:	0,
-			'visibleNight'	:	0,
-			'visibleNearest'	:	0,
-			'fromMarker'	:	'',
-			'toMarker'		:	'',
+			'fromMarker'	:	{storage:'', prefix: 'Z', desc: '', ico: 'http://www.google.com/intl/en_us/mapfiles/ms/micons/blue-dot.png', input_id: 'from_name'},
+			'toMarker'		:	{storage:'', prefix: 'Do', desc: '', ico: 'http://www.google.com/intl/en_us/mapfiles/ms/micons/red-dot.png', input_id: 'to_name'},
 			'zoomLvl'		:	13,
 			'zoomLvlDetail'	:	17,
-			'circleRadius'	:	0.7,
+			'circleRadius'	:	0.8,
 			'tripDistance'	:	0,	//meters
 			'tripDuration'	:	0	//seconds
 		};
@@ -37,13 +56,15 @@
 	            hintText: "Nazwa przystanku/ulicy",
 	            noResultsText: "Brak wynikow",
 	            searchingText: "Trwa wyszukiwanie...",
-				direction: "From"
+				direction: "From",
+				id: 'from_name'
 	        });
 	        $("#to").tokenInput("/exporter/podpowiedz/", {
 	            hintText: "Nazwa przystanku/ulicy",
 	            noResultsText: "Brak wynikow",
 	            searchingText: "Trwa wyszukiwanie...",
-				direction: "To"
+				direction: "To",
+				id: 'to_name'
 	        });
 	    });
     </script>
@@ -62,19 +83,19 @@
 			Do: <input type="text" id="to" name="to" />
 		</div>
 		<div class="fl" id="menu">
-			<a href="#" onclick="showBusStops();return false;" id="showBusStop">Pokaż przystanki autobusowe</a>
-			<a href="#" onclick="hideStops('A');return false;" id="hideBusStop" style="display:none;">Ukryj przystanki autobusowe</a>
+			<a href="#" onclick="showBusStops();return false;" id="bus_show">Pokaż przystanki autobusowe</a>
+			<a href="#" onclick="hideStops('A');return false;" id="bus_hide" style="display:none;">Ukryj przystanki autobusowe</a>
 			<br>
 			
-			<a href="#" onclick="showTramStops();return false;" id="showTramStop">Pokaż przystanki tramwajowe</a>
-			<a href="#" onclick="hideStops('T');return false;" id="hideTramStop" style="display:none;">Ukryj przystanki tramwajowe</a>
+			<a href="#" onclick="showTramStops();return false;" id="tram_show">Pokaż przystanki tramwajowe</a>
+			<a href="#" onclick="hideStops('T');return false;" id="tram_hide" style="display:none;">Ukryj przystanki tramwajowe</a>
 			<br>
 			
-			<a href="#" onclick="showNightStops();return false;" id="showNightStop">Pokaż przystanki nocne</a>
-			<a href="#" onclick="hideStops('N');return false;" id="hideNightStop" style="display:none;">Ukryj przystanki nocne</a>
+			<a href="#" onclick="showNightStops();return false;" id="night_show">Pokaż przystanki nocne</a>
+			<a href="#" onclick="hideStops('N');return false;" id="night_hide" style="display:none;">Ukryj przystanki nocne</a>
 			<br>
 			
-			<a href="#" onclick="hideNearest();return false;" class='hideNearest' style='display:none;'>Ukryj przystanki w okolicy<br></a>			
+			<a href="#" onclick="hideNearest();return false;" class='nearest_hide' style='display:none;'>Ukryj przystanki w okolicy<br></a>			
 			<a href="#" onclick="hideDirection();return false;" id='hideDirection' style='display:none;'>Usuń trasę<br></a>			
 		</div>
 		<div class="fl" id="status">

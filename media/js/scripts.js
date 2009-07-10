@@ -7,6 +7,7 @@ function initialize() {
     map.setCenter(new GLatLng(52.406374, 16.9251681), appKontekst.zoomLvl);
     map.setUIToDefault();
 	geocoder = new GClientGeocoder();
+	geocoder.setBaseCountryCode('pl');
 
 	cluster = new ClusterMarker(map, {
    			clusterMarkerTitle: 'Kliknij aby przyblić i zobaczyć %count przystanki'
@@ -40,87 +41,57 @@ function start(){
  * pokazanie przystanków autobusowych
  */
 function showBusStops(){
-	$('#msg').show();
-	var searchUrl = '/exporter/przystanki/autobusy/';
-
-    GDownloadUrl(searchUrl, function(data, responseCode) {
-		if (responseCode == 200) {
-			var xml = GXml.parse(data);
-			BusmarkersArray = [];
-			var markers = xml.documentElement.getElementsByTagName("marker");
-			if (markers.length > 0) {
-				for (var i = 0; i < markers.length; i++) {
-					var name = markers[i].getAttribute("name");
-					var linie = markers[i].getAttribute("linie");
-					var id = markers[i].getAttribute("id");
-					var point = new GLatLng(parseFloat(markers[i].getAttribute("lat")), parseFloat(markers[i].getAttribute("lng")));
-					
-					BusmarkersArray.push(newMarker(point, name, id, linie));
-				}
-				showPointers(BusmarkersArray);
-				$('#showBusStop').hide();
-				$('#hideBusStop').show();
-				appKontekst.visibleBus = 1;
-			}	
-		}
-     });	
+	downloadMarkers(markersArray.bus,markersArray.bus.url);	
 }
 
 /*
  * pokazanie przystankow tramwajowych
  */
 function showTramStops(){
-	$('#msg').show();
-	var searchUrl = '/exporter/przystanki/tramwaje/';
-
-    GDownloadUrl(searchUrl, function(data, responseCode) {
-		if (responseCode == 200) {
-			var xml = GXml.parse(data);
-			TrammarkersArray = [];
-			var markers = xml.documentElement.getElementsByTagName("marker");
-			if (markers.length > 0) {
-				for (var i = 0; i < markers.length; i++) {
-					var name = markers[i].getAttribute("name");
-					var id = markers[i].getAttribute("id");
-					var linie = markers[i].getAttribute("linie");
-					var point = new GLatLng(parseFloat(markers[i].getAttribute("lat")), parseFloat(markers[i].getAttribute("lng")));
-					
-					TrammarkersArray.push(newMarker(point, name, id, linie));
-				}
-				showPointers(TrammarkersArray);
-				$('#showTramStop').hide();
-				$('#hideTramStop').show();
-				appKontekst.visibleTram = 1;
-			}	
-		}
-     });	
+	downloadMarkers(markersArray.tram,markersArray.tram.url);	
 }
 
 /*
  * pokazanie przystankow nocnych
  */
 function showNightStops(){
-	$('#msg').show();
-	var searchUrl = '/exporter/przystanki/nocne/';
+	downloadMarkers(markersArray.night,markersArray.night.url);		
+}
 
-    GDownloadUrl(searchUrl, function(data, responseCode) {
+/*
+ * pokazanie najblizszych punktow
+ */
+function showNearest(lat, lng){
+	downloadMarkers(markersArray.nearest,markersArray.nearest.url + lat + '/' + lng + '/');		
+	doDrawCircle(lat,lng);
+	map.setCenter(new GLatLng(lat, lng),appKontekst.zoomLvlDetail);
+	$('.nearest_hide').show();
+}
+
+/*
+ * Pobiera markery z serwera i umieszcza je na mapie
+ */
+function downloadMarkers(markerType,url){
+	$('#msg').show();
+	
+    GDownloadUrl(url, function(data, responseCode) {
 		if (responseCode == 200) {
 			var xml = GXml.parse(data);
-			NightmarkersArray = [];
+			markerType.markers = [];
 			var markers = xml.documentElement.getElementsByTagName("marker");
 			if (markers.length > 0) {
 				for (var i = 0; i < markers.length; i++) {
 					var name = markers[i].getAttribute("name");
-					var id = markers[i].getAttribute("id");
 					var linie = markers[i].getAttribute("linie");
+					var id = markers[i].getAttribute("id");
 					var point = new GLatLng(parseFloat(markers[i].getAttribute("lat")), parseFloat(markers[i].getAttribute("lng")));
 					
-					NightmarkersArray.push(newMarker(point, name, id, linie));
+					markerType.markers.push(newMarker(point, name, id, linie));
 				}
-				showPointers(NightmarkersArray);
-				$('#showNightStop').hide();
-				$('#hideNightStop').show();
-				appKontekst.visibleNight = 1;
+				showPointers(markerType.markers);
+				$('#' + markerType.name + '_show').hide();
+				$('#' + markerType.name + '_hide').show();
+				markerType.visible = 1;
 			}	
 		}
      });		
@@ -164,34 +135,38 @@ function showPointers(markersIn){
 function hideStops(type){
 	$('#msg').show();
 	cluster.removeMarkers();
-	if(appKontekst.visibleBus == 1 && type != 'A'){
-		cluster.addMarkers(BusmarkersArray);
+	if(markersArray.bus.visible == 1 && type != 'A'){
+		cluster.addMarkers(markersArray.bus.markers);
 	}
-	if(appKontekst.visibleTram == 1 && type != 'T'){
-		cluster.addMarkers(TrammarkersArray);
+	if(markersArray.tram.visible == 1 && type != 'T'){
+		cluster.addMarkers(markersArray.tram.markers);
 	}
-	if(appKontekst.visibleNight == 1 && type != 'N'){
-		cluster.addMarkers(NightmarkersArray);
+	if(markersArray.night.visible == 1 && type != 'N'){
+		cluster.addMarkers(markersArray.night.markers);
 	}
-	if(appKontekst.visibleNearest == 1 && type == 'Nearest'){
-		cluster.addMarkers(NearestmarkersArray);
+	if(markersArray.nearest.visible == 1 && type == 'Nearest'){
+		cluster.addMarkers(markersArray.nearest.markers);
 	}	
 	switch(type){
 		case 'A':
-				$('#showBusStop').show();
-				$('#hideBusStop').hide();
+				$('#' + markersArray.bus.name + '_show').show();
+				$('#' + markersArray.bus.name + '_hide').hide();
+				markersArray.bus.visible = 0;
 				break;					
 		case 'T':
-				$('#showTramStop').show();
-				$('#hideTramStop').hide();
+				$('#' + markersArray.tram.name + '_show').show();
+				$('#' + markersArray.tram.name + '_hide').hide();
+				markersArray.tram.visible = 0;
 				break;					
 		case 'N':
-				$('#showNightStop').show();
-				$('#hideNightStop').hide();
+				$('#' + markersArray.night.name + '_show').show();
+				$('#' + markersArray.night.name + '_hide').hide();
+				markersArray.night.visible = 0;
 				break;					
 		case 'Nearest':
 				$("#showNearest").show();
-				$(".hideNearest").hide();		
+				$('#' + markersArray.nearest.name + '_hide').hide();
+				markersArray.nearest.visible = 0;
 		default:
 				break;					
 	}
@@ -212,73 +187,44 @@ function putMarker(direction,lat,lng,name, bus_id){
 		}
 	}
 	
-	var	nearest = "<br><a href=\"javascript:showNearest("+lat+","+lng+");\" id='showNearest'>pokaż przystanki w okolicy</a><a href=\"javascript:hideNearest();\" class='hideNearest' style='display:none;'>ukryj przystanki w okolicy</a>";
+	if (direction == 'To')
+		var new_marker = appKontekst.toMarker;
+	if (direction == 'From')
+		var new_marker = appKontekst.fromMarker;
 
-	var blueIcon = new GIcon(G_DEFAULT_ICON);
-	blueIcon.image = "http://www.google.com/intl/en_us/mapfiles/ms/micons/blue-dot.png";
-	var redIcon = new GIcon(G_DEFAULT_ICON);
-	redIcon.image = "http://www.google.com/intl/en_us/mapfiles/ms/micons/red-dot.png";
+	var m_icon = new GIcon(G_DEFAULT_ICON);
+	m_icon.image = new_marker.ico;
 
-	if(direction == 'To'){
-		if (appKontekst.toMarker != '') {
-			map.removeOverlay(appKontekst.toMarker);
-		}			
-		appKontekst.toMarker = new GMarker(new GLatLng(lat, lng), {
-			icon: blueIcon
-		});
-
-		GEvent.addListener(appKontekst.toMarker, "click", function(){
-			appKontekst.toMarker.openInfoWindowHtml("Do: " + name + nearest);
-		});
-		map.addOverlay(appKontekst.toMarker);
-		map.setCenter(new GLatLng(lat, lng), appKontekst.zoomLvl);
+	if (new_marker.storage != '') {
+			map.removeOverlay(new_marker.storage);
 	}
+
+	new_marker.storage = new GMarker(new GLatLng(lat, lng), {
+		icon: m_icon,
+		draggable: true
+	});
+	generateHTMLmarker(new_marker,name);
 	
-	if(direction == 'From'){
-		if (appKontekst.toMarker != '') {
-			map.removeOverlay(appKontekst.fromMarker);
-		}			
-		appKontekst.fromMarker = new GMarker(new GLatLng(lat, lng), {
-			icon: redIcon
+	GEvent.addListener(new_marker.storage, "click", function(){
+		new_marker.storage.openInfoWindowHtml(new_marker.desc);
+	});
+	GEvent.addListener(new_marker.storage, "dragend", function() {
+		geocoder.getLocations(new_marker.storage.getLatLng(), function(wyniki){
+			reverseCoder(new_marker,wyniki);
 		});
-		GEvent.addListener(appKontekst.fromMarker, "click", function(){
-			appKontekst.fromMarker.openInfoWindowHtml("Z: " + name + nearest);
-		});
-		map.addOverlay(appKontekst.fromMarker);
-		map.setCenter(new GLatLng(lat, lng), appKontekst.zoomLvl);
-	}	
+	});
+	map.addOverlay(new_marker.storage);
+	map.setCenter(new GLatLng(lat, lng), appKontekst.zoomLvl);
 }
 
 /*
- * pokazanie najblizszych punktow
+ * generuje opis markera z pozycja
  */
-function showNearest(lat,lng){
-	$('#msg').show();
-	var searchUrl = '/exporter/przystanki/najblizsze/'+lat+'/'+lng+'/';
-
-    GDownloadUrl(searchUrl, function(data, responseCode) {
-		if (responseCode == 200) {
-			var xml = GXml.parse(data);
-			NearestmarkersArray = [];
-			var markers = xml.documentElement.getElementsByTagName("marker");
-
-			if (markers.length > 0) {
-				for (var i = 0; i < markers.length; i++) {
-					var name = markers[i].getAttribute("name");
-					var id = markers[i].getAttribute("id");
-					var linie = markers[i].getAttribute("linie");
-					var point = new GLatLng(parseFloat(markers[i].getAttribute("lat")), parseFloat(markers[i].getAttribute("lng")));
-					
-					NearestmarkersArray.push(newMarker(point, name, id, linie));
-				}
-				doDrawCircle(lat,lng);
-				map.setZoom(appKontekst.zoomLvlDetail);
-				$("#showNearest").hide();
-				$(".hideNearest").show();
-				showPointers(NearestmarkersArray);
-			}	
-		}
-     });
+function generateHTMLmarker(new_marker,name){
+	var lat = new_marker.storage.getLatLng().lat();
+	var lng = new_marker.storage.getLatLng().lng();
+	var	nearest = "<br><a href=\"javascript:showNearest("+lat+","+lng+");\" id='showNearest'>pokaż przystanki w okolicy</a><a href=\"javascript:hideNearest();\" class='hideNearest' style='display:none;'>ukryj przystanki w okolicy</a>";
+	new_marker.desc = new_marker.prefix + ': ' + name + nearest;
 }
 
 /*
@@ -337,19 +283,21 @@ function showWay(direction,lat,lng){
 	var endPoint = [];
 	
 	if(direction == 'To'){
-		endPoint['lat'] = appKontekst.toMarker.getLatLng().lat();
-		endPoint['lng'] = appKontekst.toMarker.getLatLng().lng();
+		endPoint['lat'] = appKontekst.toMarker.storage.getLatLng().lat();
+		endPoint['lng'] = appKontekst.toMarker.storage.getLatLng().lng();
 		startPoint['lat'] = lat;
 		startPoint['lng'] = lng;
 	}
 
 	if(direction == 'From'){
-		startPoint['lat'] = appKontekst.fromMarker.getLatLng().lat();
-		startPoint['lng'] = appKontekst.fromMarker.getLatLng().lng();
+		startPoint['lat'] = appKontekst.fromMarker.storage.getLatLng().lat();
+		startPoint['lng'] = appKontekst.fromMarker.storage.getLatLng().lng();
 		endPoint['lat'] = lat;
 		endPoint['lng'] = lng;
 	}
-	
+	if(directions){
+		directions.clear();
+	}
 	directions = new GDirections(map, document.getElementById("route_msg"));
 	directions.load("from: "+startPoint['lat']+","+startPoint['lng']+" to: "+endPoint['lat']+","+endPoint['lng'], {travelMode:G_TRAVEL_MODE_WALKING, locale: 'pl_PL'});
 	
@@ -373,4 +321,31 @@ function hideDirection(){
 	$('#status .distance').empty();
 	$('#status .duration').empty();	
 	directions.clear();
+}
+
+/*
+ * po przesunieciu pinezki pobierz nazwe ulicy
+ */
+function reverseCoder(marker, wyniki) {
+	var address = new Array();
+	if (!wyniki || wyniki.Status.code != 200) {
+		//brak lokalizacji
+	} else {
+		if(wyniki.Placemark[0].AddressDetails && wyniki.Placemark[0].AddressDetails.Country && wyniki.Placemark[0].AddressDetails.Country.AdministrativeArea){
+			if (wyniki.Placemark[0].AddressDetails.Country.AdministrativeArea.AdministrativeAreaName && wyniki.Placemark[0].AddressDetails.Country.AdministrativeArea.AdministrativeAreaName) {
+				address['area'] = wyniki.Placemark[0].AddressDetails.Country.AdministrativeArea.AdministrativeAreaName;
+			}
+			if (wyniki.Placemark[0].AddressDetails.Country.AdministrativeArea.SubAdministrativeArea.Locality && wyniki.Placemark[0].AddressDetails.Country.AdministrativeArea.SubAdministrativeArea) {
+				address['city'] = wyniki.Placemark[0].AddressDetails.Country.AdministrativeArea.SubAdministrativeArea.Locality.LocalityName;
+			} 
+			if (wyniki.Placemark[0].AddressDetails.Country.AdministrativeArea.SubAdministrativeArea.Locality 
+				&& wyniki.Placemark[0].AddressDetails.Country.AdministrativeArea.SubAdministrativeArea 
+				&& wyniki.Placemark[0].AddressDetails.Country.AdministrativeArea.SubAdministrativeArea.Locality.Thoroughfare) {
+				address['street'] = wyniki.Placemark[0].AddressDetails.Country.AdministrativeArea.SubAdministrativeArea.Locality.Thoroughfare.ThoroughfareName ;
+			}			
+		}
+		address['full_address'] = wyniki.Placemark[0].address;
+	}
+	$('#'+marker.input_id).val(address['street']);
+	generateHTMLmarker(marker,address['street']);
 }

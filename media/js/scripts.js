@@ -13,6 +13,8 @@ function initialize() {
    			clusterMarkerTitle: 'Kliknij aby przyblić i zobaczyć %count przystanki'
    	});
 	
+	createContext();
+	
 	GEvent.addListener(map,"tilesloaded", function() {
 		$('#msg').hide();
 	}); 
@@ -21,9 +23,6 @@ function initialize() {
 	}); 
 	GEvent.addListener(map,"dragend", function() {
 		$('#msg').hide();
-	}); 
-	GEvent.addListener(map,"zoomend", function() {
-		$('#msg').show();
 	}); 
   }
 }
@@ -41,28 +40,28 @@ function start(){
  * pokazanie przystanków autobusowych
  */
 function showBusStops(){
-	downloadMarkers(markersArray.bus,markersArray.bus.url);	
+	downloadMarkers(bus,bus.url);	
 }
 
 /*
  * pokazanie przystankow tramwajowych
  */
 function showTramStops(){
-	downloadMarkers(markersArray.tram,markersArray.tram.url);	
+	downloadMarkers(tram,tram.url);	
 }
 
 /*
  * pokazanie przystankow nocnych
  */
 function showNightStops(){
-	downloadMarkers(markersArray.night,markersArray.night.url);		
+	downloadMarkers(night,night.url);		
 }
 
 /*
  * pokazanie najblizszych punktow
  */
 function showNearest(lat, lng){
-	downloadMarkers(markersArray.nearest,markersArray.nearest.url + lat + '/' + lng + '/');		
+	downloadMarkers(nearest,nearest.url + lat + '/' + lng + '/');		
 	doDrawCircle(lat,lng);
 	map.setCenter(new GLatLng(lat, lng),appKontekst.zoomLvlDetail);
 	$('.nearest_hide').show();
@@ -103,16 +102,16 @@ function downloadMarkers(markerType,url){
 function newMarker(point, name, id, linie) {
 	var marker = new GMarker(point);
 	GEvent.addListener(marker, 'click', function() {
-		map.setCenter(point,appKontekst.zoomLvlDetail);
+		map.setCenter(point);
 		var html = 'Przystanek: ' + name + '<br>Linie: ';
 		var linie_temp = linie.split('|');
 		for(indeks in linie_temp){
 			html = html + '<a href="/mapa/rozklad/'+id+'/'+linie_temp[indeks]+'/" target="_blank" title="Rozkład linii '+linie_temp[indeks]+'">' + linie_temp[indeks] + '</a>' + ' ';
 		}
-		if (appKontekst.fromMarker) {
+		if (appKontekst.fromMarker.storage) {
 			html = html + "<br><a href=\"javascript:showWay('From'," + point.lat() + "," + point.lng() + ");\">pokaż drogę na ten przystanek</a>";
 		}	
-		if (appKontekst.toMarker) {
+		if (appKontekst.toMarker.storage) {
 			html = html + "<br><a href=\"javascript:showWay('To'," + point.lat() + "," + point.lng() + ");\">pokaż drogę z tego przystanku</a>";
 		}	
 		marker.openInfoWindowHtml(html);
@@ -135,38 +134,44 @@ function showPointers(markersIn){
 function hideStops(type){
 	$('#msg').show();
 	cluster.removeMarkers();
-	if(markersArray.bus.visible == 1 && type != 'A'){
-		cluster.addMarkers(markersArray.bus.markers);
+	if(bus.visible == 1 && type != 'A'){
+		cluster.addMarkers(bus.markers);
 	}
-	if(markersArray.tram.visible == 1 && type != 'T'){
-		cluster.addMarkers(markersArray.tram.markers);
+	if(tram.visible == 1 && type != 'T'){
+		cluster.addMarkers(tram.markers);
 	}
-	if(markersArray.night.visible == 1 && type != 'N'){
-		cluster.addMarkers(markersArray.night.markers);
+	if(night.visible == 1 && type != 'N'){
+		cluster.addMarkers(night.markers);
 	}
-	if(markersArray.nearest.visible == 1 && type == 'Nearest'){
-		cluster.addMarkers(markersArray.nearest.markers);
+	if(nearest.visible == 1 && type != 'Nearest'){
+		cluster.addMarkers(nearest.markers);
+	}	
+	if(linia.visible == 1 && type != 'Linia'){
+		cluster.addMarkers(linia.markers);
 	}	
 	switch(type){
 		case 'A':
-				$('#' + markersArray.bus.name + '_show').show();
-				$('#' + markersArray.bus.name + '_hide').hide();
-				markersArray.bus.visible = 0;
+				$('#' + bus.name + '_show').show();
+				$('#' + bus.name + '_hide').hide();
+				bus.visible = 0;
 				break;					
 		case 'T':
-				$('#' + markersArray.tram.name + '_show').show();
-				$('#' + markersArray.tram.name + '_hide').hide();
-				markersArray.tram.visible = 0;
+				$('#' + tram.name + '_show').show();
+				$('#' + tram.name + '_hide').hide();
+				tram.visible = 0;
 				break;					
 		case 'N':
-				$('#' + markersArray.night.name + '_show').show();
-				$('#' + markersArray.night.name + '_hide').hide();
-				markersArray.night.visible = 0;
+				$('#' + night.name + '_show').show();
+				$('#' + night.name + '_hide').hide();
+				night.visible = 0;
 				break;					
 		case 'Nearest':
 				$("#showNearest").show();
-				$('#' + markersArray.nearest.name + '_hide').hide();
-				markersArray.nearest.visible = 0;
+				$('.' + nearest.name + '_hide').hide();
+				nearest.visible = 0;
+		case 'Linia':
+				$('.' + linia.name + '_hide').hide();
+				linia.visible = 0;
 		default:
 				break;					
 	}
@@ -212,9 +217,10 @@ function putMarker(direction,lat,lng,name, bus_id){
 		geocoder.getLocations(new_marker.storage.getLatLng(), function(wyniki){
 			reverseCoder(new_marker,wyniki);
 		});
+		hideNearest();
 	});
 	map.addOverlay(new_marker.storage);
-	map.setCenter(new GLatLng(lat, lng), appKontekst.zoomLvl);
+	map.setCenter(new GLatLng(lat, lng));
 }
 
 /*
@@ -273,6 +279,17 @@ function hideNearest(){
 	}
 	hideStops('Nearest');	
 }
+
+/*
+ * ukrycie trasy linii
+ */
+function hideLinia(){
+	if (linia.polyline) {
+		map.removeOverlay(linia.polyline);
+	}
+	hideStops('Linia');	
+}
+
 
 /*
  * pokazanie drogi na/z przystanku
@@ -348,4 +365,101 @@ function reverseCoder(marker, wyniki) {
 	}
 	$('#'+marker.input_id).val(address['street']);
 	generateHTMLmarker(marker,address['street']);
+}
+
+/*
+ * utworz menu pod prawym przyciskiem
+ */
+function createContext(){
+	contextmenu = document.createElement("div");
+      contextmenu.style.visibility="hidden";
+      contextmenu.style.background="#ffffff";
+      contextmenu.style.border="1px solid #8888FF";
+
+      contextmenu.innerHTML = '<a href="javascript:zoomIn()"><div class="context">&nbsp;&nbsp;Przybliż&nbsp;&nbsp;<\/div><\/a>'
+                            + '<a href="javascript:zoomOut()"><div class="context">&nbsp;&nbsp;Oddal&nbsp;&nbsp;<\/div><\/a>'
+							+ '<a href="javascript:startHere()"><div class="context">&nbsp;&nbsp;Punkt startowy&nbsp;&nbsp;<\/div><\/a>'
+							+ '<a href="javascript:endHere()"><div class="context">&nbsp;&nbsp;Punkt końcowy&nbsp;&nbsp;<\/div><\/a>';
+
+      map.getContainer().appendChild(contextmenu);
+
+      GEvent.addListener(map,"singlerightclick",function(pixel,tile) {
+        appKontekst.clickedPixel = pixel;
+        var x=pixel.x;
+        var y=pixel.y;
+        if (x > map.getSize().width - 120) { x = map.getSize().width - 120 }
+        if (y > map.getSize().height - 100) { y = map.getSize().height - 100 }
+        var pos = new GControlPosition(G_ANCHOR_TOP_LEFT, new GSize(x,y));  
+        pos.apply(contextmenu);
+        contextmenu.style.visibility = "visible";
+      });
+	
+	GEvent.addListener(map, "click", function() {
+        contextmenu.style.visibility="hidden";
+      });
+	
+}
+
+/*
+ * przybliz mape
+ */
+function zoomIn() {
+	var point = map.fromContainerPixelToLatLng(appKontekst.clickedPixel);
+    map.zoomIn(point,true);
+    contextmenu.style.visibility="hidden";
+}      
+
+/*
+ * oddal mape
+ */
+function zoomOut() {
+	var point = map.fromContainerPixelToLatLng(appKontekst.clickedPixel)
+    map.setCenter(point,map.getZoom()-1);
+    contextmenu.style.visibility="hidden";
+}      
+
+/*
+ * ustaw punkt startowy
+
+ */
+function startHere(){
+	var point = map.fromContainerPixelToLatLng(appKontekst.clickedPixel);
+	putMarker('From',point.lat(),point.lng(),'');
+	geocoder.getLocations(point, function(wyniki){
+		reverseCoder(appKontekst.fromMarker,wyniki);
+	});
+	contextmenu.style.visibility="hidden";
+}
+
+/*
+ * ustaw punkt koncowy
+ */
+function endHere(){
+	var point = map.fromContainerPixelToLatLng(appKontekst.clickedPixel);
+	putMarker('To',point.lat(),point.lng(),'');
+	geocoder.getLocations(point, function(wyniki){
+		reverseCoder(appKontekst.toMarker,wyniki);
+	});
+	contextmenu.style.visibility="hidden";
+}
+
+/*
+ * wyrysowanie linii
+ */
+function drawLine(przystanki){
+	var temp_poly = [];
+	for (przystanek in przystanki) {
+		var name = przystanki[przystanek].name;
+		var linie = przystanki[przystanek].linie;
+		var id = przystanki[przystanek].id;
+		var point = new GLatLng(parseFloat(przystanki[przystanek].lat), parseFloat(przystanki[przystanek].lng));
+		
+		linia.markers.push(newMarker(point, name, id, linie));
+		temp_poly.push(point);
+	}
+	showPointers(linia.markers);
+	$('.' + linia.name + '_hide').show();
+	linia.visible = 1;
+	linia.polyline = new GPolyline(temp_poly, "#ff0000", 5);
+	map.addOverlay(linia.polyline);	
 }

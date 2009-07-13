@@ -80,6 +80,12 @@ class Trasy(models.Model):
             return l.przystanek.nazwa_pomocnicza
         return p
     
+    def getLine(self):
+        return self.linie_set.get().nazwa_linii
+    
+    def getType(self):
+        return self.linie_set.get().typ.nazwa
+    
 class RozkladPrzystanek(models.Model):
     linia = models.ForeignKey(Linie)
     przystanek = models.ForeignKey(Przystanki)

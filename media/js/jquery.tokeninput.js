@@ -265,7 +265,8 @@ $.TokenList = function (input, settings) {
 			'lng':	li_data.lng,
 		});
 
-		putMarker(settings.direction,li_data.lat,li_data.lng,li_data.name);
+		if(settings.onclick)
+			eval(settings.onclick);
 		
         // Clear input box and make sure it keeps focus
         input_box
@@ -392,6 +393,9 @@ $.TokenList = function (input, settings) {
 					if(!results[i].desc){
 						results[i].desc = 'ulica';
 					}
+					if(!results[i].przystanki){
+						results[i].przystanki = '';
+					}
                     var this_li = $("<li>"+highlight_term(results[i].name, query)+"<br>"+ results[i].desc + "</li>")
                                       .appendTo(dropdown_ul);
                 
@@ -405,7 +409,7 @@ $.TokenList = function (input, settings) {
                         select_dropdown_item(this_li);
                     }
         
-                    $.data(this_li.get(0), "tokeninput", {"id": results[i].id, "name": results[i].name, "lat": results[i].lat, "lng": results[i].lng});
+                    $.data(this_li.get(0), "tokeninput", {"id": results[i].id, "name": results[i].name, "lat": results[i].lat, "lng": results[i].lng, "przystanki": results[i].przystanki});
                 }
             }
 

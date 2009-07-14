@@ -70,7 +70,7 @@ def importuj_przystanek(request):
 @transaction.commit_manually
 def importuj_trasy(request):
     #import trasy z pliku XML wygenerowanego wg standardu MPK Poznan
-    rozklad_file_name = settings.IMPORT_DATA_ROOT + 'Rozklady_small.xml'
+    rozklad_file_name = settings.IMPORT_DATA_ROOT + 'Rozklady.xml'
     # usuniecie wszystkich danych o trasach oraz rozkladach i liniach
     try: 
         Linie.objects.all().delete()  

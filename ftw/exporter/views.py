@@ -1,8 +1,9 @@
-# Create your views here.
+# -*- coding: utf-8 -*- 
 from django.http import HttpResponse
 from django.shortcuts import render_to_response, get_object_or_404
-from ftw.router.models import Ulice, Przystanki, Trasy, PrzystanekPozycja
+from ftw.router.models import Ulice, Przystanki, Trasy, PrzystanekPozycja, TypTrasy
 import simplejson as json
+from django.conf import settings
 
 def completeBusStopsXML(request, typIn):
     import xml.dom.minidom
@@ -110,7 +111,7 @@ def trasy(request):
     except:
         return HttpResponse(status=404)
 
-    trasy = Trasy.objects.filter(linie__nazwa_linii__icontains=linia)
+    trasy = Trasy.objects.filter(linie__nazwa_linii__istartswith=linia)[:15]
     out = []
     
     for trasa in trasy:
@@ -143,49 +144,11 @@ def trasy(request):
 
 def findWay(request,fromway,toway):
     #znajduje trase miedzy przystankami
+    import pickle
     from dijkstar import find_path
-    G = {
-         'nodes'    :   {},
-         'edges'    :   {},
-         }
     
-    trasy = Trasy.objects.all()
-    
-    for trasa in trasy:
-        prev = ''
-        for przystanek in trasa.przystanki.order_by('pozycja').all():
-            if (prev):
-                edge_name = 'l%st%s' % (trasa.getLine(),przystanek.czas_dojazdu)
-                edge_name_curr = 'l%st%sc' % (trasa.getLine(),przystanek.czas_dojazdu)
-                G['nodes'][str(przystanek.przystanek.kod)] = {}
-                
-                G['nodes'][str(prev.przystanek.kod)][str(przystanek.przystanek.kod)] =  edge_name
-                G['edges'][edge_name] = (przystanek.czas_dojazdu,)
-
-                G['nodes'][str(przystanek.przystanek.kod)][str(prev.przystanek.kod)] =  edge_name_curr
-                G['edges'][edge_name_curr] = (przystanek.czas_dojazdu,)
-            else:
-                G['nodes'][str(przystanek.przystanek.kod)] = {}    
-            prev = przystanek        
-            
-            
-    #print G
-    """G = {
-            'nodes': {  # Adjacency matrix
-                1: {2: 'e1'},  # Vertex v goes to vertex u via edge e
-                2: {1: 'e1', 3:'e2', 4:'e3'},
-                3: {2: 'e2',4: 'e3' },
-                4: {2:  'e3'},
-             },
-
-             'edges': {  # Edge attributes
-                 'e1': (1,),  # Edge e's attributes
-                 'e2': (10,),  # Edge e's attributes
-                 'e3':  (2,),
-             }
-         }
-    """
-    res = find_path(G,G, 'SZYM-01', 'GORC-02')
+    G = pickle.load(open(settings.IMPORT_DATA_ROOT + 'routes.poz', 'rb'))
+    res = find_path(G,G, 'SZYM-01', 'KASZ-02')
     print res
     response = HttpResponse(mimetype='text/javascript')
     #response.write(json.dumps(out))

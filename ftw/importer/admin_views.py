@@ -12,6 +12,42 @@ from datetime import datetime
 from django.db import transaction
 
 @staff_member_required
+def generateGraph(request):
+    import pickle
+    G = {
+         'nodes'    :   {},
+         'edges'    :   {},
+         }
+    
+    inner_qs = TypTrasy.objects.exclude(kod__exact='?').exclude(kod__exact='N')
+    trasy = Trasy.objects.filter(linie__typ__in=inner_qs).all()
+    
+    for trasa in trasy:
+        prev = ''
+        for przystanek in trasa.przystanki.order_by('pozycja').all():
+            if (prev):
+                edge_name = 'l%st%s' % (trasa.getLine(),przystanek.czas_dojazdu)
+                edge_name_curr = 'l%st%sc' % (trasa.getLine(),przystanek.czas_dojazdu)
+
+                if not G['nodes'].has_key(unicode(przystanek.przystanek.kod)):
+                    G['nodes'][unicode(przystanek.przystanek.kod)] = {} 
+                
+                G['nodes'][unicode(prev.przystanek.kod)][unicode(przystanek.przystanek.kod)] =  edge_name
+                G['edges'][edge_name] = (przystanek.czas_dojazdu,)
+
+                G['nodes'][unicode(przystanek.przystanek.kod)][unicode(prev.przystanek.kod)] =  edge_name_curr
+                G['edges'][edge_name_curr] = (przystanek.czas_dojazdu,)
+            else:
+                if not G['nodes'].has_key(unicode(przystanek.przystanek.kod)):
+                    G['nodes'][unicode(przystanek.przystanek.kod)] = {}    
+            prev = przystanek        
+    pickle.dump(G, open(settings.IMPORT_DATA_ROOT + 'routes.poz', 'wb'))
+    return render_to_response('admin/import/msg.html', {
+                                                'msg': 'Mapa polaczen zostala wygenerowana',
+                                                 })
+
+
+@staff_member_required
 @transaction.commit_manually
 def importuj_ulice(request):
     import csv
@@ -135,8 +171,10 @@ class trasaHandler(ContentHandler):
             
             #tylko dla poznania
             try:
-                if int(self.lineNumber) > 26:
+                if int(self.lineNumber) > 26 and int(self.lineNumber) < 200:
                     tempTyp = 'A'
+                if int(self.lineNumber) > 200:
+                    tempTyp = 'N'
                 else:
                     tempTyp = 'T'
             except:
@@ -265,8 +303,8 @@ class trasaHandler(ContentHandler):
                 
             czas_dojazdu = self.lastStamp - tempStamp
             
-            if czas_dojazdu < 0 or czas_dojazdu > 9:
-                czas_dojazdu = 1
+            if czas_dojazdu <= 0 or czas_dojazdu > 9:
+                czas_dojazdu = 2
                 
             self.valid = {}
             self.inDP = False

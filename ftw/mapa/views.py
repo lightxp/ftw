@@ -32,7 +32,7 @@ def rozkladGenerate(request, przystanek, linia):
             nd[item.godzina] = ''
         nd[item.godzina] += str(item.minuta) + ', '
 
-    tr = Trasy.objects.filter(przystanki__przystanek=przystanek).get()
+    tr = Trasy.objects.filter(przystanki__przystanek=przystanek).filter(linie__nazwa_linii=linia).get()
     
     return render_to_response('mapa/index/rozklad.html', {
                                                           'nazwa':       rozklad_obj,

@@ -86,6 +86,15 @@ class Trasy(models.Model):
     def getType(self):
         return self.linie_set.get().typ.nazwa
     
+    def getNextStopTime(self, przystanek, linia, type, h, m):
+        p = self.przystanki.filter(pk=przystanek).get().przystanek
+        rozkladp = RozkladPrzystanek.objects.filter(przystanek=p).filter(linia__kod=linia)
+        rozklad = Rozklad.objects.filter(rozklad=rozkladp).filter(godzina__gte=h).filter(minuta__gt=m)
+        if type == 'D':
+            rozklad = rozklad.filter(dzien_powszedni=True)
+        rozklad = rozklad.all()[:1]
+        return rozklad
+    
 class RozkladPrzystanek(models.Model):
     linia = models.ForeignKey(Linie)
     przystanek = models.ForeignKey(Przystanki)

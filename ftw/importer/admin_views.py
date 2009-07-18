@@ -26,17 +26,26 @@ def generateGraph(request):
         prev = ''
         for przystanek in trasa.przystanki.order_by('pozycja').all():
             if (prev):
-                edge_name = 'l%st%s' % (trasa.getLine(),przystanek.czas_dojazdu)
-                edge_name_curr = 'l%st%sc' % (trasa.getLine(),przystanek.czas_dojazdu)
+                linia = trasa.getLine()
+                edge_name = 'l%st%s' % (linia,przystanek.czas_dojazdu)
+                edge_name_curr = 'l%st%sc' % (linia,przystanek.czas_dojazdu)
 
                 if not G['nodes'].has_key(unicode(przystanek.przystanek.kod)):
                     G['nodes'][unicode(przystanek.przystanek.kod)] = {} 
                 
                 G['nodes'][unicode(prev.przystanek.kod)][unicode(przystanek.przystanek.kod)] =  edge_name
-                G['edges'][edge_name] = (przystanek.czas_dojazdu,)
+                G['edges'][edge_name] = {
+                                         'trasa'    :   trasa.id,
+                                         'przystanek':  przystanek.id,
+                                         'linia'    :   linia
+                                         }#(przystanek.czas_dojazdu,)
 
                 G['nodes'][unicode(przystanek.przystanek.kod)][unicode(prev.przystanek.kod)] =  edge_name_curr
-                G['edges'][edge_name_curr] = (przystanek.czas_dojazdu,)
+                G['edges'][edge_name_curr] = {
+                                         'trasa'    :   trasa.id,
+                                         'przystanek':  przystanek.id,
+                                         'linia'    :   linia
+                                         }#(przystanek.czas_dojazdu,)
             else:
                 if not G['nodes'].has_key(unicode(przystanek.przystanek.kod)):
                     G['nodes'][unicode(przystanek.przystanek.kod)] = {}    

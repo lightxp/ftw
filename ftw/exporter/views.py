@@ -146,9 +146,27 @@ def findWay(request,fromway,toway):
     #znajduje trase miedzy przystankami
     import pickle
     from dijkstar import find_path
-    
+    from time import localtime, strftime
+    h = strftime("%H", localtime())
+    m = strftime("%M", localtime())
+            
     G = pickle.load(open(settings.IMPORT_DATA_ROOT + 'routes.poz', 'rb'))
-    res = find_path(G,G, 'SZYM-01', 'KASZ-02')
+    
+    for edge in G['edges']:
+        e_przystanek = G['edges'][edge]['przystanek']
+        e_trasa = G['edges'][edge]['trasa']
+        e_linia = G['edges'][edge]['linia']
+        item = PrzystanekPozycja.objects.filter(pk=e_przystanek).filter(trasy__pk=e_trasa).get()
+        
+        nastepny = item.trasy_set.get().getNextStopTime(przystanek=e_przystanek,linia=e_linia,type='P',h=h,m=m)
+        if nastepny.count() > 0:
+            ile_do_przesiadki = (nastepny.get().godzina * 60 + nastepny.get().minuta) - (int(h)*60 + int(m))
+        else:
+            ile_do_przesiadki = 0
+            
+        G['edges'][edge] = (item.czas_dojazdu+ile_do_przesiadki,)        
+
+    res = find_path(G,G, 'SZYM-01', 'GORC-02')
     print res
     response = HttpResponse(mimetype='text/javascript')
     #response.write(json.dumps(out))

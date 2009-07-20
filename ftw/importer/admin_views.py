@@ -21,35 +21,35 @@ def generateGraph(request):
     
     inner_qs = TypTrasy.objects.exclude(kod__exact='?').exclude(kod__exact='N')
     trasy = Trasy.objects.filter(linie__typ__in=inner_qs).all()
-    
+
     for trasa in trasy:
         prev = ''
         for przystanek in trasa.przystanki.order_by('pozycja').all():
             if (prev):
                 linia = trasa.getLine()
-                edge_name = 'l%st%s' % (linia,przystanek.czas_dojazdu)
-                edge_name_curr = 'l%st%sc' % (linia,przystanek.czas_dojazdu)
+                edge_name = 'l%sp%sc%s' % (linia,przystanek.przystanek.kod,przystanek.czas_dojazdu)
+                edge_name_curr = 'l%sp%sc%sc' % (linia,przystanek.przystanek.kod,przystanek.czas_dojazdu)
 
                 if not G['nodes'].has_key(unicode(przystanek.przystanek.kod)):
                     G['nodes'][unicode(przystanek.przystanek.kod)] = {} 
                 
                 G['nodes'][unicode(prev.przystanek.kod)][unicode(przystanek.przystanek.kod)] =  edge_name
-                G['edges'][edge_name] = {
-                                         'trasa'    :   trasa.id,
-                                         'przystanek':  przystanek.id,
-                                         'linia'    :   linia
-                                         }#(przystanek.czas_dojazdu,)
+                G['edges'][edge_name] = (przystanek.czas_dojazdu, trasa.id, przystanek.id, linia)
 
-                G['nodes'][unicode(przystanek.przystanek.kod)][unicode(prev.przystanek.kod)] =  edge_name_curr
-                G['edges'][edge_name_curr] = {
-                                         'trasa'    :   trasa.id,
-                                         'przystanek':  przystanek.id,
-                                         'linia'    :   linia
-                                         }#(przystanek.czas_dojazdu,)
             else:
                 if not G['nodes'].has_key(unicode(przystanek.przystanek.kod)):
-                    G['nodes'][unicode(przystanek.przystanek.kod)] = {}    
-            prev = przystanek        
+                    G['nodes'][unicode(przystanek.przystanek.kod)] = {}
+                        
+            prev = przystanek
+            #znajdz przystanki w okolicy i dopisz je do graphu
+            nearest = przystanek.przystanek.getNearest(radius=0.1)
+            if nearest:
+                for item in nearest:
+                    time = (float(item['distance']) * 1000)/2.8/60
+                    edge_pieszo = 'l666p%sc%s' % (item['kod'], time )
+                    G['nodes'][unicode(przystanek.przystanek.kod)][unicode(item['kod'])] = edge_pieszo
+                    G['edges'][edge_pieszo] = (time,)
+                    
     pickle.dump(G, open(settings.IMPORT_DATA_ROOT + 'routes.poz', 'wb'))
     return render_to_response('admin/import/msg.html', {
                                                 'msg': 'Mapa polaczen zostala wygenerowana',

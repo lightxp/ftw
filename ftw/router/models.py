@@ -43,7 +43,31 @@ class Przystanki(models.Model):
 
     def __unicode__(self):
         return u'%s (%s)' % (self.nazwa_pomocnicza, self.kod)
-
+    
+    def getNearest(self, radius):
+        #pobierz najblizsze, radius = km
+        out = []
+        if self.lat <= 0 or self.lng <=0:
+            return out
+         
+        nearest = Przystanki.objects.extra(
+                                   select={
+                                           'distance': " 3959 * acos( cos( radians(%s) ) * cos( radians( lat ) ) * cos( radians( lng ) - radians(%s) ) + sin( radians(%s) ) * sin( radians( lat ) ) ) " % (round(self.lat,5),round(self.lng,5),round(self.lat,5))}
+                                   ).extra(
+                                           order_by = ['distance']
+                                           ).filter(lat__gt=0).filter(lng__gt=0).all()
+        for item in nearest:
+            if item.distance <= radius and item.distance > 0:
+                temp = {
+                            'kod'   :   item.kod,
+                            'lat'   :   item.lat,
+                            'lng'   :   item.lng,
+                            'id'    :   item.id, 
+                            'distance': item.distance, 
+                        }
+                out.append(temp)
+        return out        
+                    
 class PrzystanekPozycja(models.Model):
     przystanek = models.ForeignKey(Przystanki, related_name="przystanek")
     pozycja = models.IntegerField()

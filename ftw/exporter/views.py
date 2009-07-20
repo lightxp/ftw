@@ -145,14 +145,14 @@ def trasy(request):
 def findWay(request,fromway,toway):
     #znajduje trase miedzy przystankami
     import pickle
-    from dijkstar import find_path
+    from ftw.exporter.dijkstar import find_path
     from time import localtime, strftime
-    h = strftime("%H", localtime())
-    m = strftime("%M", localtime())
+    h = 8#strftime("%H", localtime())
+    m = 20#strftime("%M", localtime())
             
     G = pickle.load(open(settings.IMPORT_DATA_ROOT + 'routes.poz', 'rb'))
     
-    for edge in G['edges']:
+    """for edge in G['edges']:
         e_przystanek = G['edges'][edge]['przystanek']
         e_trasa = G['edges'][edge]['trasa']
         e_linia = G['edges'][edge]['linia']
@@ -165,11 +165,37 @@ def findWay(request,fromway,toway):
             ile_do_przesiadki = 0
             
         G['edges'][edge] = (item.czas_dojazdu+ile_do_przesiadki,)        
-
-    res = find_path(G,G, 'SZYM-01', 'GORC-02')
-    print res
+    """
+    try:
+        res = find_path(G,G, 'SOB-02', 'ZOO-22', calculateWeight)
+        przystanki = res[0]
+        edges = res[1]
+        times = res[2]
+        total_time = res[3]
+        print total_time
+    except NoPathError:
+        res = []
+            
     response = HttpResponse(mimetype='text/javascript')
     #response.write(json.dumps(out))
 
     return response    
+
+def calculateWeight(v, e_attrs, prev_e_attrs):
+    #dodatkowa funkcja
+    #v - kod przystanku
+    #e_attrs/prev_e_attrs atrybuty obecnego/poprzedniego wezla
+    # czas_dojazdu, trasa.id, przystanek.id, linia.kod
+    from time import localtime, strftime
+    h = 8#strftime("%H", localtime())
+    m = 20#strftime("%M", localtime())
+    ile_do_przesiadki = 0
     
+    """if e_attrs[3] != prev_e_attrs[3]:
+        item = PrzystanekPozycja.objects.filter(pk=e_attrs[2]).filter(trasy__pk=e_attrs[1]).get()
+        nastepny = item.trasy_set.get().getNextStopTime(przystanek=e_attrs[2],linia=e_attrs[3],type='P',h=h,m=m)
+        
+        if nastepny.count() > 0:
+            ile_do_przesiadki = (nastepny.get().godzina * 60 + nastepny.get().minuta) - (int(h)*60 + int(m))
+    """
+    return e_attrs[0] + ile_do_przesiadki

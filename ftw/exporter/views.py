@@ -147,8 +147,8 @@ def findWay(request,fromway,toway):
     import pickle
     from ftw.exporter.dijkstar import find_path
     from time import localtime, strftime
-    h = 8#strftime("%H", localtime())
-    m = 20#strftime("%M", localtime())
+    h = strftime("%H", localtime())
+    m = strftime("%M", localtime())
             
     G = pickle.load(open(settings.IMPORT_DATA_ROOT + 'routes.poz', 'rb'))
     
@@ -166,19 +166,34 @@ def findWay(request,fromway,toway):
             
         G['edges'][edge] = (item.czas_dojazdu+ile_do_przesiadki,)        
     """
+    from_way = Przystanki.objects.filter(pk=fromway).get().kod
+    to_way = Przystanki.objects.filter(pk=toway).get().kod
+    
+    result = {}
+    
     try:
-        res = find_path(G,G, 'SOB-02', 'ZOO-22', calculateWeight)
-        przystanki = res[0]
-        edges = res[1]
-        times = res[2]
-        total_time = res[3]
-        print total_time
-    except NoPathError:
-        res = []
-            
-    response = HttpResponse(mimetype='text/javascript')
-    #response.write(json.dumps(out))
+        res = find_path(G,G, from_way, to_way, calculateWeight)
+        result['przystanki'] = res[0]
+        result['polaczenia'] = res[1]
+        result['czasy'] = res[2]
+        result['calkowity_czas'] = res[3]
+        result['trasa'] = []
+        for przystanek in res[0]:
+            temp_przystanek = Przystanki.objects.filter(kod__iexact=przystanek).get()
+            temp_dict = {
+                         'rodzaj'   :   '',
+                         'id'       :   temp_przystanek.id,
+                         'linie'    :   "|".join(temp_przystanek.linia.values_list('nazwa_linii',flat=True)),
+                         'name'     :   temp_przystanek.nazwa_pomocnicza,
+                         'lat'      :   str(temp_przystanek.lat),
+                         'lng'      :   str(temp_przystanek.lng),
+                         }
+            result['trasa'].append(temp_dict)
+    except:
+        pass
 
+    response = HttpResponse(mimetype='text/javascript')
+    response.write(json.dumps(result))
     return response    
 
 def calculateWeight(v, e_attrs, prev_e_attrs):

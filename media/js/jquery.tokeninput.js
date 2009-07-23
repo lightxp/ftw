@@ -277,8 +277,7 @@ $.TokenList = function (input, settings) {
         hide_dropdown();
         
         // Save this token id
-        var id_string = li_data.id + ","
-        hidden_input.val(hidden_input.val() + id_string);
+        hidden_input.val(li_data.id);
     }
 
     // Select a token in the token list

@@ -17,7 +17,7 @@ class LinieAdmin(admin.ModelAdmin):
 
 
 class PrzystankiAdmin(admin.ModelAdmin):
-    list_display = ('nazwa_pomocnicza','kod')
+    list_display = ('nazwa_pomocnicza','kod','lat','lng')
     search_fields = ['nazwa_pomocnicza', 'kod']
     ordering = ['nazwa_pomocnicza']
 

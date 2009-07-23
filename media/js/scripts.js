@@ -463,3 +463,38 @@ function drawLine(przystanki){
 	linia.polyline = new GPolyline(temp_poly, "#ff0000", 5);
 	map.addOverlay(linia.polyline);	
 }
+
+/*
+ * wyrysowywuje trase
+ */
+function drawRoute(route){
+	var temp_poly = [];
+	for (przystanek in route) {
+		var name = route[przystanek].name;
+		var linie = route[przystanek].linie;
+		var id = route[przystanek].id;
+		var point = new GLatLng(parseFloat(route[przystanek].lat), parseFloat(route[przystanek].lng));
+		
+		trasa.markers.push(newMarker(point, name, id, linie));
+		temp_poly.push(point);
+	}
+	showPointers(trasa.markers);
+	//$('.' + trasa.name + '_hide').show(); //TODO
+	trasa.visible = 1;
+	trasa.polyline = new GPolyline(temp_poly, "#ff00ff", 5);
+	map.addOverlay(trasa.polyline);		
+}
+
+/*
+ * pobierz trase z serwera
+ */
+function findRoute(){
+	var from = $("#from").val();
+	var to = $("#to").val();
+	$.get("exporter/trasa/"+from+"/"+to+"/", function(data){
+	  received_way = JSON.parse(data);
+	  if (received_way.trasa) {
+	  	drawRoute(received_way.trasa);
+	  }
+	});	
+}

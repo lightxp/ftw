@@ -85,4 +85,6 @@ INSTALLED_APPS = (
     'ftw.router',
     'ftw.importer',
     'ftw.exporter',
+    'ftw.mapa',
+    'ftw.mapa.templatetags',
 )

@@ -149,6 +149,9 @@ function hideStops(type){
 	if(linia.visible == 1 && type != 'Linia'){
 		cluster.addMarkers(linia.markers);
 	}	
+	if(linia.visible == 1 && type != 'Trasa'){
+		cluster.addMarkers(trasa.markers);
+	}	
 	switch(type){
 		case 'A':
 				$('#' + bus.name + '_show').show();
@@ -172,6 +175,9 @@ function hideStops(type){
 		case 'Linia':
 				$('.' + linia.name + '_hide').hide();
 				linia.visible = 0;
+		case 'Trasa':
+				$('.' + trasa.name + '_hide').hide();
+				trasa.visible = 0;
 		default:
 				break;					
 	}
@@ -199,6 +205,7 @@ function putMarker(direction,lat,lng,name, bus_id){
 
 	var m_icon = new GIcon(G_DEFAULT_ICON);
 	m_icon.image = new_marker.ico;
+	m_icon.iconSize = new GSize(32,37);
 
 	if (new_marker.storage != '') {
 			map.removeOverlay(new_marker.storage);
@@ -290,6 +297,17 @@ function hideLinia(){
 	hideStops('Linia');	
 }
 
+/*
+ * ukrycie wytyczonej trasy
+ */
+function hideTrasa(){
+	if (trasa.polyline)
+		map.removeOverlay(trasa.polyline);
+	if(currentstop)
+		map.removeOverlay(currentstop);
+	hideStops('Trasa');	
+	$('#all_route_msg').html('');
+}
 
 /*
  * pokazanie drogi na/z przystanku
@@ -479,7 +497,7 @@ function drawRoute(route){
 		temp_poly.push(point);
 	}
 	showPointers(trasa.markers);
-	//$('.' + trasa.name + '_hide').show(); //TODO
+	$('.' + trasa.name + '_hide').show();
 	trasa.visible = 1;
 	trasa.polyline = new GPolyline(temp_poly, "#ff00ff", 5);
 	map.addOverlay(trasa.polyline);		
@@ -495,6 +513,38 @@ function findRoute(){
 	  received_way = JSON.parse(data);
 	  if (received_way.trasa) {
 	  	drawRoute(received_way.trasa);
+		completeDesc(received_way.polaczenia);
 	  }
 	});	
+}
+
+/*
+ * uzupełnij opis
+ */
+function completeDesc(polaczenia){
+	$('#all_route_msg').html('');
+	for (polaczenie in polaczenia){
+		var text = '<span onmouseover="centerOnBus('+received_way.trasa[polaczenie].lat+','+received_way.trasa[polaczenie].lng+')">'; 
+		text += polaczenia[polaczenie].linia + ' ' + Math.round(polaczenia[polaczenie].czas*100)/100 + 'min';
+		text += '</span><br>'
+		$('#all_route_msg').append(text);
+	}
+}
+
+/*
+ * wycentruj na przystanku
+ */
+function centerOnBus(lat,lng){
+	if(currentstop)
+		map.removeOverlay(currentstop);
+		
+	var m_icon = new GIcon(G_DEFAULT_ICON);
+	m_icon.image = '/fe_media/images/gm_icons/info.png';
+	m_icon.iconSize = new GSize(32,37);
+	
+	currentstop = new GMarker(new GLatLng(lat, lng), {
+		icon: m_icon
+	});	
+	map.addOverlay(currentstop);
+	map.setCenter(new GLatLng(lat,lng));
 }

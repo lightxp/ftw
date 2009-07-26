@@ -13,24 +13,25 @@ def index(request):
 
 def rozkladGenerate(request, przystanek, linia):
     rozklad_obj = RozkladPrzystanek.objects.filter(linia__nazwa_linii=linia).filter(przystanek__id=przystanek).get()
+    trasa = Trasy.objects.filter(linie__nazwa_linii=linia).filter(przystanki__przystanek__id=przystanek)[0:1].get()
     #for rozklad in rozklad_obj:
     dp = {}
     for item in rozklad_obj.rozklad.filter(dzien_powszedni=True).order_by('minuta').order_by('godzina'):
         if not dp.has_key(item.godzina):
-            dp[item.godzina] = ''
-        dp[item.godzina] += str(item.minuta) + ', '
+            dp[item.godzina] = []
+        dp[item.godzina].append(item)
     
     sb = {}
     for item in rozklad_obj.rozklad.filter(sobota=True).order_by('minuta').order_by('godzina'):
         if not sb.has_key(item.godzina):
-            sb[item.godzina] = ''
-        sb[item.godzina] += str(item.minuta) + ', '
+            sb[item.godzina] = []
+        sb[item.godzina].append(item)
 
     nd = {}
     for item in rozklad_obj.rozklad.filter(niedziela=True).order_by('minuta').order_by('godzina'):
         if not nd.has_key(item.godzina):
-            nd[item.godzina] = ''
-        nd[item.godzina] += str(item.minuta) + ', '
+            nd[item.godzina] = []
+        nd[item.godzina].append(item)
 
     tr = Trasy.objects.filter(przystanki__przystanek=przystanek).filter(linie__nazwa_linii=linia).get()
     
@@ -41,5 +42,6 @@ def rozkladGenerate(request, przystanek, linia):
                                                           'rozklad_pp': dp,
                                                           'rozklad_sb': sb,
                                                           'rozklad_nd': nd,
+                                                          'trasa'   :   trasa.getBusList(),
                                                  },
                             context_instance=RequestContext(request, processors=[media_url]))

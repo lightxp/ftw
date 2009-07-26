@@ -93,16 +93,10 @@ class Trasy(models.Model):
         return u"Brak przypisania do linii; %d przystanki/(%d min)" % (self.przystanki.count(), self.dlugosc_trasy)
 
     def getFirst(self):
-        p = self.przystanki.all().order_by('pozycja')[:1]
-        for l in p:
-            return l.przystanek.nazwa_pomocnicza
-        return p
+        return self.przystanki.order_by('pozycja')[:1].get().przystanek.nazwa_pomocnicza
     
     def getLast(self):
-        p = self.przystanki.all().order_by('-pozycja')[:1]
-        for l in p:
-            return l.przystanek.nazwa_pomocnicza
-        return p
+        return self.przystanki.order_by('-pozycja')[:1].get().przystanek.nazwa_pomocnicza
     
     def getLine(self):
         return self.linie_set.get().nazwa_linii
@@ -116,8 +110,15 @@ class Trasy(models.Model):
         rozklad = Rozklad.objects.filter(rozklad=rozkladp).filter(godzina__gte=h).filter(minuta__gt=m)
         if type == 'D':
             rozklad = rozklad.filter(dzien_powszedni=True)
+        if type == 'S':
+            rozklad = rozklad.filter(sobota=True)
+        if type == 'ND':
+            rozklad = rozklad.filter(niedziela=True)
         rozklad = rozklad.all()[:1]
         return rozklad
+    
+    def getBusList(self):
+        return self.przystanki.all().order_by('pozycja')
     
 class RozkladPrzystanek(models.Model):
     linia = models.ForeignKey(Linie)
@@ -143,6 +144,25 @@ class Rozklad(models.Model):
     
     class Meta:
         ordering = ["godzina","minuta"]
+        
+    def isNext(self):
+        from time import localtime, strftime
+        day = localtime()[6]
+        h = strftime("%H", localtime())
+        m = strftime("%M", localtime())
+        
+        if day<5 and not self.dzien_powszedni:
+            return False
+        if day==5 and not self.sobota:
+            return False
+        if day==6 and not self.niedziela:
+            return False
+        if self.godzina >= int(h)+1:
+            return True
+        if self.godzina >= int(h) and self.minuta > int(m):
+            return True
+        else:
+            return False
     
 class TypTrasy(models.Model):
     kod = models.CharField(max_length=2)

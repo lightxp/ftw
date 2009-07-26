@@ -55,19 +55,20 @@
 		var directions;
 		var contextmenu;
 		var received_way;
+		var currentstop;
 		var appKontekst = {
 			'fromMarker'	:	{
 				storage:'', 
 				prefix: 'Z', 
 				desc: '', 
-				ico: 'http://www.google.com/intl/en_us/mapfiles/ms/micons/blue-dot.png', 
+				ico: '{{ MEDIA_URL }}images/gm_icons/home.png', 
 				input_id: 'from_name'
 				},
 			'toMarker'		:	{
 				storage:'', 
 				prefix: 'Do', 
 				desc: '', 
-				ico: 'http://www.google.com/intl/en_us/mapfiles/ms/micons/red-dot.png', 
+				ico: '{{ MEDIA_URL }}images/gm_icons/bus.png', 
 				input_id: 'to_name'
 				},
 			'zoomLvl'		:	13,
@@ -138,6 +139,7 @@
 			<a href="#" onclick="hideNearest();return false;" class='nearest_hide' style='display:none;'>Ukryj przystanki w okolicy<br></a>			
 			<a href="#" onclick="hideDirection();return false;" id='hideDirection' style='display:none;'>Usuń trasę<br></a>			
 			<a href="#" onclick="hideLinia();return false;" class='linia_hide' style='display:none;'>Ukryj linię<br></a>			
+			<a href="#" onclick="hideTrasa();return false;" class='trasa_hide' style='display:none;'>Ukryj drogę<br></a>			
 		</div>
 		<div class="fl" id="status">
 			Trasa:<br>
@@ -151,5 +153,6 @@
 	</div>	
 	<div id="map"></div>
 	<div id="msg"><img src="{{ MEDIA_URL }}images/loader.gif"/></div>
-	<div id="route_msg"></div>	
+	<div id="route_msg"></div>
+	<div id="all_route_msg"></div>	
 {% endblock %}

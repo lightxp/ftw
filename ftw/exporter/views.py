@@ -173,15 +173,11 @@ def findWay(request,fromway,toway):
     
     try:
         res = find_path(G,G, from_way, to_way, calculateWeight)
-        result['przystanki'] = res[0]
-        result['polaczenia'] = res[1]
-        result['czasy'] = res[2]
         result['calkowity_czas'] = res[3]
         result['trasa'] = []
         for przystanek in res[0]:
             temp_przystanek = Przystanki.objects.filter(kod__iexact=przystanek).get()
             temp_dict = {
-                         'rodzaj'   :   '',
                          'id'       :   temp_przystanek.id,
                          'linie'    :   "|".join(temp_przystanek.linia.values_list('nazwa_linii',flat=True)),
                          'name'     :   temp_przystanek.nazwa_pomocnicza,
@@ -189,6 +185,19 @@ def findWay(request,fromway,toway):
                          'lng'      :   str(temp_przystanek.lng),
                          }
             result['trasa'].append(temp_dict)
+            
+        result['polaczenia'] = []    
+        for polaczenie in res[1]:
+            temp_polaczenie = G['edges'][polaczenie]
+     
+            temp_pol = {
+                        'czas'  :   temp_polaczenie[0]
+                        }
+            if len(temp_polaczenie) > 1:
+                temp_pol['linia'] = temp_polaczenie[3]
+            else:
+                temp_pol['linia'] = u'pieszo'
+            result['polaczenia'].append(temp_pol)    
     except:
         pass
 

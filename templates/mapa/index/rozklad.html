@@ -1,4 +1,5 @@
 {% extends "base/base_mapa.html" %}
+{% load mapa_extras %}
 
 {% block section_title %}Rozkład{% endblock %}
 
@@ -8,22 +9,52 @@ Trasa: {{ pierwszy }} - {{ ostatni }}<br>
 <div class="fl">
 	<h3>Dni powszednie</h3>
 		{% for key,item in rozklad_pp.items %}
-	    	{{ key }}: {{ item }}<br>
+			{{ key }}: 
+				{% for iitem in item %}
+					{% if iitem.isNext %}
+						<span style="color:red;">{{ iitem.minuta }}</span>
+					{% else %}
+						{{ iitem.minuta }}	
+					{% endif %}	
+				{% endfor %}<br>	
 		{% endfor %}
 </div>
 	
 <div class="fl">
 	<h3>Soboty</h3>
 		{% for key,item in rozklad_sb.items %}
-	    	{{ key }}: {{ item }}<br>
+			{{ key }}: 
+				{% for iitem in item %}
+					{% if iitem.isNext %}
+						<span style="color:red;">{{ iitem.minuta }}</span>
+					{% else %}
+						{{ iitem.minuta }}	
+					{% endif %}	
+				{% endfor %}<br>	
 		{% endfor %}			
 </div>
 
 <div class="fl">
 	<h3>Niedziele i święta</h3>
 		{% for key,item in rozklad_nd.items %}
-	    	{{ key }}: {{ item }}<br>
+			{{ key }}: 
+				{% for iitem in item %}
+					{% if iitem.isNext %}
+						<span style="color:red;">{{ iitem.minuta }}</span>
+					{% else %}
+						{{ iitem.minuta }}	
+					{% endif %}	
+				{% endfor %}<br>	
 		{% endfor %}			
 </div>
+<div class="fl">
+	<h3>Trasa</h3>
+	{% for przystanek in trasa %}
+		{% ifequal przystanek.przystanek.nazwa_pomocnicza nazwa.przystanek.nazwa_pomocnicza %}
+			->
+		{% endifequal %}
+		{{ przystanek.przystanek.nazwa_pomocnicza }}<br>
+	{% endfor %}
+</div>	
 <div class="clear"></div>
 {% endblock %}

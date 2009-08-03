@@ -466,6 +466,7 @@ function endHere(){
  */
 function drawLine(przystanki){
 	var temp_poly = [];
+	linia.markers = [];
 	for (przystanek in przystanki) {
 		var name = przystanki[przystanek].name;
 		var linie = przystanki[przystanek].linie;
@@ -487,6 +488,7 @@ function drawLine(przystanki){
  */
 function drawRoute(route){
 	var temp_poly = [];
+	trasa.markers = [];
 	for (przystanek in route) {
 		var name = route[przystanek].name;
 		var linie = route[przystanek].linie;
@@ -507,13 +509,22 @@ function drawRoute(route){
  * pobierz trase z serwera
  */
 function findRoute(){
-	var from = $("#from").val();
-	var to = $("#to").val();
-	$.get("exporter/trasa/"+from+"/"+to+"/", function(data){
+	$('#msg').show();
+	//var from = $("#from").val();
+	//var to = $("#to").val();
+	var from_way_lat = appKontekst.fromMarker.storage.getLatLng().lat();
+	var from_way_lng = appKontekst.fromMarker.storage.getLatLng().lng();
+	var to_way_lat = appKontekst.toMarker.storage.getLatLng().lat();
+	var to_way_lng = appKontekst.toMarker.storage.getLatLng().lng();
+
+	$.get("exporter/trasa/"+from_way_lat+"/"+from_way_lng+"/"+to_way_lat+"/"+to_way_lng+"/", function(data){
 	  received_way = JSON.parse(data);
 	  if (received_way.trasa) {
 	  	drawRoute(received_way.trasa);
 		completeDesc(received_way.polaczenia);
+	  }else{
+	  	alert('Brak trasy');
+		$('#msg').hide();
 	  }
 	});	
 }
@@ -529,6 +540,7 @@ function completeDesc(polaczenia){
 		text += '</span><br>'
 		$('#all_route_msg').append(text);
 	}
+	$('#msg').hide();
 }
 
 /*

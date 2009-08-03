@@ -12,14 +12,17 @@ from datetime import datetime
 from django.db import transaction
 
 @staff_member_required
-def generateGraph(request):
+def generateGraph(request, type):
     import pickle
     G = {
          'nodes'    :   {},
          'edges'    :   {},
          }
     
-    inner_qs = TypTrasy.objects.exclude(kod__exact='?').exclude(kod__exact='N')
+    if type == 'day':
+        inner_qs = TypTrasy.objects.exclude(kod__exact='?').exclude(kod__exact='N')
+    else:
+        inner_qs = TypTrasy.objects.filter(kod__exact='N') 
     trasy = Trasy.objects.filter(linie__typ__in=inner_qs).all()
 
     for trasa in trasy:
@@ -50,7 +53,7 @@ def generateGraph(request):
                     G['nodes'][unicode(przystanek.przystanek.kod)][unicode(item['kod'])] = edge_pieszo
                     G['edges'][edge_pieszo] = (time,)
                     
-    pickle.dump(G, open(settings.IMPORT_DATA_ROOT + 'routes.poz', 'wb'))
+    pickle.dump(G, open(settings.IMPORT_DATA_ROOT + 'routes_'+type+'.poz', 'wb'))
     return render_to_response('admin/import/msg.html', {
                                                 'msg': 'Mapa polaczen zostala wygenerowana',
                                                  })

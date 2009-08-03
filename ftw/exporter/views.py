@@ -142,64 +142,69 @@ def trasy(request):
 
     return response    
 
-def findWay(request,fromway,toway):
+def findWay(request,fromway_lat,fromway_lng,toway_lat,toway_lng):
     #znajduje trase miedzy przystankami
     import pickle
     from ftw.exporter.dijkstar import find_path
     from time import localtime, strftime
     h = strftime("%H", localtime())
     m = strftime("%M", localtime())
-            
-    G = pickle.load(open(settings.IMPORT_DATA_ROOT + 'routes.poz', 'rb'))
     
-    """for edge in G['edges']:
-        e_przystanek = G['edges'][edge]['przystanek']
-        e_trasa = G['edges'][edge]['trasa']
-        e_linia = G['edges'][edge]['linia']
-        item = PrzystanekPozycja.objects.filter(pk=e_przystanek).filter(trasy__pk=e_trasa).get()
-        
-        nastepny = item.trasy_set.get().getNextStopTime(przystanek=e_przystanek,linia=e_linia,type='P',h=h,m=m)
-        if nastepny.count() > 0:
-            ile_do_przesiadki = (nastepny.get().godzina * 60 + nastepny.get().minuta) - (int(h)*60 + int(m))
-        else:
-            ile_do_przesiadki = 0
-            
-        G['edges'][edge] = (item.czas_dojazdu+ile_do_przesiadki,)        
-    """
-    from_way = Przystanki.objects.filter(pk=fromway).get().kod
-    to_way = Przystanki.objects.filter(pk=toway).get().kod
+    if int(h) > 22 or int(h) < 6:
+        G = pickle.load(open(settings.IMPORT_DATA_ROOT + 'routes_night.poz', 'rb'))
+    else:
+        G = pickle.load(open(settings.IMPORT_DATA_ROOT + 'routes_day.poz', 'rb'))
+
+    ile_tras = 3
+    fromway = getNearestAdvenced(fromway_lat,fromway_lng,ile_tras)
+    toway = getNearestAdvenced(toway_lat,toway_lng,ile_tras)
+
+    routes = []
+    for i in range(ile_tras):
+        try:
+            routes.append(find_path(G,G, fromway[i]['kod'], toway[i]['kod'], calculateWeight))
+        except:
+            pass
     
+    #posortuj predkosci
+    routes_speed = []
+    for item in routes:
+        routes_speed.append(item[3])        
+    routes_speed.sort()    
+    
+    #przypisz najszybsza
+    for item in routes:
+        print item[3]
+        if item[3] == routes_speed[0]:
+            res = item
+
     result = {}
-    
-    try:
-        res = find_path(G,G, from_way, to_way, calculateWeight)
-        result['calkowity_czas'] = res[3]
-        result['trasa'] = []
-        for przystanek in res[0]:
-            temp_przystanek = Przystanki.objects.filter(kod__iexact=przystanek).get()
-            temp_dict = {
-                         'id'       :   temp_przystanek.id,
-                         'linie'    :   "|".join(temp_przystanek.linia.values_list('nazwa_linii',flat=True)),
-                         'name'     :   temp_przystanek.nazwa_pomocnicza,
-                         'lat'      :   str(temp_przystanek.lat),
-                         'lng'      :   str(temp_przystanek.lng),
-                         }
-            result['trasa'].append(temp_dict)
-            
-        result['polaczenia'] = []    
-        for polaczenie in res[1]:
-            temp_polaczenie = G['edges'][polaczenie]
-     
-            temp_pol = {
-                        'czas'  :   temp_polaczenie[0]
-                        }
-            if len(temp_polaczenie) > 1:
-                temp_pol['linia'] = temp_polaczenie[3]
-            else:
-                temp_pol['linia'] = u'pieszo'
-            result['polaczenia'].append(temp_pol)    
-    except:
-        pass
+    result['calkowity_czas'] = res[3]
+    result['trasa'] = []
+
+    for przystanek in res[0]:
+        temp_przystanek = Przystanki.objects.filter(kod__iexact=przystanek).get()
+        temp_dict = {
+                     'id'       :   temp_przystanek.id,
+                     'linie'    :   "|".join(temp_przystanek.linia.values_list('nazwa_linii',flat=True)),
+                     'name'     :   temp_przystanek.nazwa_pomocnicza,
+                     'lat'      :   str(temp_przystanek.lat),
+                     'lng'      :   str(temp_przystanek.lng),
+                     }
+        result['trasa'].append(temp_dict)
+        
+    result['polaczenia'] = []    
+    for polaczenie in res[1]:
+        temp_polaczenie = G['edges'][polaczenie]
+ 
+        temp_pol = {
+                    'czas'  :   temp_polaczenie[0]
+                    }
+        if len(temp_polaczenie) > 1:
+            temp_pol['linia'] = temp_polaczenie[3]
+        else:
+            temp_pol['linia'] = u'pieszo'
+        result['polaczenia'].append(temp_pol)    
 
     response = HttpResponse(mimetype='text/javascript')
     response.write(json.dumps(result))
@@ -211,15 +216,38 @@ def calculateWeight(v, e_attrs, prev_e_attrs):
     #e_attrs/prev_e_attrs atrybuty obecnego/poprzedniego wezla
     # czas_dojazdu, trasa.id, przystanek.id, linia.kod
     from time import localtime, strftime
-    h = 8#strftime("%H", localtime())
-    m = 20#strftime("%M", localtime())
+    h = strftime("%H", localtime())
+    m = strftime("%M", localtime())
     ile_do_przesiadki = 0
     
-    """if e_attrs[3] != prev_e_attrs[3]:
+    if len(e_attrs)>1 and len(prev_e_attrs)>1 and e_attrs[3] != prev_e_attrs[3]:
+        #przesiadka z jednego at na inny at
         item = PrzystanekPozycja.objects.filter(pk=e_attrs[2]).filter(trasy__pk=e_attrs[1]).get()
-        nastepny = item.trasy_set.get().getNextStopTime(przystanek=e_attrs[2],linia=e_attrs[3],type='P',h=h,m=m)
+        nastepny = item.trasy_set.get().getNextStopTime(przystanek=e_attrs[2],linia=e_attrs[3],h=h,m=m)
         
         if nastepny.count() > 0:
             ile_do_przesiadki = (nastepny.get().godzina * 60 + nastepny.get().minuta) - (int(h)*60 + int(m))
-    """
+    
     return e_attrs[0] + ile_do_przesiadki
+
+
+def getNearestAdvenced(lat, lng, ile):
+    #pobierz najblizsze przystanki
+    out = []
+    nearest = Przystanki.objects.extra(
+                               select={
+                                       'distance': " 3959 * acos( cos( radians(%s) ) * cos( radians( lat ) ) * cos( radians( lng ) - radians(%s) ) + sin( radians(%s) ) * sin( radians( lat ) ) ) " % (round(float(lat),5),round(float(lng),5),round(float(lat),5))}
+                               ).extra(
+                                       order_by = ['distance']
+                                       ).filter(lat__gt=0).filter(lng__gt=0).all()[:ile]
+    for item in nearest:
+        if item.distance > 0:
+            temp = {
+                        'kod'   :   item.kod,
+                        'lat'   :   item.lat,
+                        'lng'   :   item.lng,
+                        'id'    :   item.id, 
+                        'distance': item.distance, 
+                    }
+            out.append(temp)
+    return out        

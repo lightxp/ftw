@@ -67,6 +67,7 @@ class Przystanki(models.Model):
                         }
                 out.append(temp)
         return out        
+
                     
 class PrzystanekPozycja(models.Model):
     przystanek = models.ForeignKey(Przystanki, related_name="przystanek")
@@ -104,15 +105,17 @@ class Trasy(models.Model):
     def getType(self):
         return self.linie_set.get().typ.nazwa
     
-    def getNextStopTime(self, przystanek, linia, type, h, m):
+    def getNextStopTime(self, przystanek, linia, h, m):
         p = self.przystanki.filter(pk=przystanek).get().przystanek
         rozkladp = RozkladPrzystanek.objects.filter(przystanek=p).filter(linia__kod=linia)
         rozklad = Rozklad.objects.filter(rozklad=rozkladp).filter(godzina__gte=h).filter(minuta__gt=m)
-        if type == 'D':
+        from time import localtime, strftime
+        day = localtime()[6]
+        if day<5:
             rozklad = rozklad.filter(dzien_powszedni=True)
-        if type == 'S':
+        if day==5:
             rozklad = rozklad.filter(sobota=True)
-        if type == 'ND':
+        if day==6:
             rozklad = rozklad.filter(niedziela=True)
         rozklad = rozklad.all()[:1]
         return rozklad

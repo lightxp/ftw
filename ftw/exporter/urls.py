@@ -7,5 +7,5 @@ urlpatterns = patterns('ftw.exporter.views',
     (r'^przystanki/nocne/$', 'completeBusStopsXML', {'typIn':'N'}),
     (r'^przystanki/najblizsze/(?P<lat>\d{2}\.\d+)/(?P<lng>\d{2}\.\d+)/$', 'completeNearest', {'distance_max': 0.5}),
     (r'^linie/$', 'trasy'),
-    (r'^trasa/(?P<fromway>\d+)/(?P<toway>\d+)/$', 'findWay'),
+    (r'^trasa/(?P<fromway_lat>\d{2}\.\d+)/(?P<fromway_lng>\d{2}\.\d+)/(?P<toway_lat>\d{2}\.\d+)/(?P<toway_lng>\d{2}\.\d+)/$', 'findWay'),
 )

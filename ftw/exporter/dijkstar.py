@@ -25,7 +25,6 @@ import heapq
 
 infinity = sys.maxint ** 2
 
-
 class DijkstarError(Exception):
     """Base class for Dijkstar errors."""
 
@@ -94,6 +93,7 @@ def single_source_shortest_paths(G, H, s, d=None, weight_func=None,
 
     nodes, edges = G['nodes'], G['edges']
     h_nodes, h_edges = H['nodes'], H['edges']
+    temp = 0
 
     while open:
         # In the nodes remaining in G that have a known weight from s,
@@ -147,7 +147,6 @@ def single_source_shortest_paths(G, H, s, d=None, weight_func=None,
             #    w_of_s_to_u_plus_w_of_e += heuristic_func(e)
             #except TypeError:
             #    pass
-
             # Get the weight of the path from s to v, if known
 
             try:
@@ -160,7 +159,7 @@ def single_source_shortest_paths(G, H, s, d=None, weight_func=None,
                 # weights from s
                 w_of_s_to_v = infinity  # note: this gets used below
                 heapq.heappush(open, (w_of_s_to_u_plus_w_of_e, v))
-
+            
             # If the current known weight from s to v is greater than the new
             # weight we just found (weight of s to u plus weight of u to v
             # across e), update v's weight in the weight list and update v's
@@ -181,7 +180,7 @@ def single_source_shortest_paths(G, H, s, d=None, weight_func=None,
     if d is not None and W[d] == infinity:
         raise NoPathError('Could not find a path from node %s to node %s' %
                           (s, d))
-
+    #print temp
     return P, W
 
 

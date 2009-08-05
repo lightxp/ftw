@@ -74,9 +74,10 @@
 			'zoomLvl'		:	13,
 			'zoomLvlDetail'	:	15,
 			'circleRadius'	:	0.8,
-			'tripDistance'	:	0,	//meters
 			'tripDuration'	:	0,	//seconds
-			'clickedPixel'	:	''
+			'clickedPixel'	:	'',
+			'toRouteDirection': true,
+			'fromRouteDirection': true
 		};
 		
 	    $(document).ready(function() {
@@ -143,8 +144,7 @@
 		</div>
 		<div class="fl" id="status">
 			Trasa:<br>
-			Dystans: <span class="distance"></span><br>
-			Czas: <span class="duration"></span><br>
+			Czas: <span class="duration"></span> min<br>
 		</div>
 		<div class="fl inputform">			
 			Linia: <input type="text" id="linia" name="linia" />
@@ -153,6 +153,7 @@
 	</div>	
 	<div id="map"></div>
 	<div id="msg"><img src="{{ MEDIA_URL }}images/loader.gif"/></div>
-	<div id="route_msg"></div>
+	<div id="from_route_msg"></div>
 	<div id="all_route_msg"></div>	
+	<div id="to_route_msg"></div>
 {% endblock %}

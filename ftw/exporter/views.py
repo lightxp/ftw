@@ -174,12 +174,11 @@ def findWay(request,fromway_lat,fromway_lng,toway_lat,toway_lng):
     
     #przypisz najszybsza
     for item in routes:
-        print item[3]
         if item[3] == routes_speed[0]:
             res = item
 
     result = {}
-    result['calkowity_czas'] = res[3]
+    result['calkowity_czas'] = int(res[3]) * 60
     result['trasa'] = []
 
     for przystanek in res[0]:

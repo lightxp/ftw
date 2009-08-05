@@ -109,10 +109,10 @@ function newMarker(point, name, id, linie) {
 			html = html + '<a href="/mapa/rozklad/'+id+'/'+linie_temp[indeks]+'/" target="_blank" title="Rozkład linii '+linie_temp[indeks]+'">' + linie_temp[indeks] + '</a>' + ' ';
 		}
 		if (appKontekst.fromMarker.storage) {
-			html = html + "<br><a href=\"javascript:showWay('From'," + point.lat() + "," + point.lng() + ");\">pokaż drogę na ten przystanek</a>";
+			html = html + "<br><a href=\"javascript:showWay('From'," + point.lat() + "," + point.lng() + ",'',true);\">pokaż drogę na ten przystanek</a>";
 		}	
 		if (appKontekst.toMarker.storage) {
-			html = html + "<br><a href=\"javascript:showWay('To'," + point.lat() + "," + point.lng() + ");\">pokaż drogę z tego przystanku</a>";
+			html = html + "<br><a href=\"javascript:showWay('To'," + point.lat() + "," + point.lng() + ");\",'',true>pokaż drogę z tego przystanku</a>";
 		}	
 		marker.openInfoWindowHtml(html);
 	});
@@ -149,7 +149,7 @@ function hideStops(type){
 	if(linia.visible == 1 && type != 'Linia'){
 		cluster.addMarkers(linia.markers);
 	}	
-	if(linia.visible == 1 && type != 'Trasa'){
+	if(trasa.visible == 1 && type != 'Trasa'){
 		cluster.addMarkers(trasa.markers);
 	}	
 	switch(type){
@@ -225,6 +225,7 @@ function putMarker(direction,lat,lng,name, bus_id){
 			reverseCoder(new_marker,wyniki);
 		});
 		hideNearest();
+		hideDirection();
 	});
 	map.addOverlay(new_marker.storage);
 	map.setCenter(new GLatLng(lat, lng));
@@ -303,7 +304,7 @@ function hideLinia(){
 function hideTrasa(){
 	if (trasa.polyline)
 		map.removeOverlay(trasa.polyline);
-	if(currentstop)
+	if (currentstop)
 		map.removeOverlay(currentstop);
 	hideStops('Trasa');	
 	$('#all_route_msg').html('');
@@ -312,10 +313,14 @@ function hideTrasa(){
 /*
  * pokazanie drogi na/z przystanku
  */
-function showWay(direction,lat,lng){
+function showWay(direction,lat,lng,varname,autoclear){
 	$('#msg').show();
 	var startPoint = [];
 	var endPoint = [];
+	
+	if(!varname){
+		varname = directions;
+	}
 	
 	if(direction == 'To'){
 		endPoint['lat'] = appKontekst.toMarker.storage.getLatLng().lat();
@@ -330,32 +335,43 @@ function showWay(direction,lat,lng){
 		endPoint['lat'] = lat;
 		endPoint['lng'] = lng;
 	}
-	if(directions){
-		directions.clear();
+	if(varname && autoclear){
+		varname.clear();
 	}
-	directions = new GDirections(map, document.getElementById("route_msg"));
-	directions.load("from: "+startPoint['lat']+","+startPoint['lng']+" to: "+endPoint['lat']+","+endPoint['lng'], {travelMode:G_TRAVEL_MODE_WALKING, locale: 'pl_PL'});
 	
-	GEvent.addListener(directions,"load", function() {
-		appKontekst.tripDistance = directions.getDistance().meters;
-		appKontekst.tripDuration = directions.getDuration().seconds;
-    	$('#status .distance').html(directions.getDistance().html);
-    	$('#status .duration').html(directions.getDuration().html);
+	varname = new GDirections(map, document.getElementById(direction.toLowerCase()+"_route_msg"));
+	varname.load("from: "+startPoint['lat']+","+startPoint['lng']+" to: "+endPoint['lat']+","+endPoint['lng'], {travelMode:G_TRAVEL_MODE_WALKING, locale: 'pl_PL',preserveViewport: true});
+
+	GEvent.addListener(varname,"load", function() {
+		appKontekst.tripDuration = appKontekst.tripDuration + varname.getDuration().seconds;
+    	$('#status .duration').html(Math.round(appKontekst.tripDuration/60));
 		$('#hideDirection').show();
 		$('#msg').hide();
-	}); 
+	});
+	
+	return varname; 
 }
 
 /*
- * usuwa trase piesza
+ * usuwa trase
  */
 function hideDirection(){
 	$('#hideDirection').hide();
-	appKontekst.tripDistance -= directions.getDistance().meters;
-	appKontekst.tripDuration -= directions.getDuration().seconds;
-	$('#status .distance').empty();
+	appKontekst.tripDuration = 0;
+	map.removeOverlay(trasa.polyline);
+	hideStops('Trasa');
+	trasa.markers = [];
+	trasa.polyline = '';
+	if (typeof appKontekst.toRouteDirection == 'object') {
+		appKontekst.toRouteDirection.clear();
+	}	
+	if (typeof appKontekst.fromRouteDirection == 'object') {
+		appKontekst.fromRouteDirection.clear();
+	}
 	$('#status .duration').empty();	
-	directions.clear();
+	if(directions){
+		directions.clear();
+	}
 }
 
 /*
@@ -414,8 +430,7 @@ function createContext(){
 	
 	GEvent.addListener(map, "click", function() {
         contextmenu.style.visibility="hidden";
-      });
-	
+      });	
 }
 
 /*
@@ -510,8 +525,7 @@ function drawRoute(route){
  */
 function findRoute(){
 	$('#msg').show();
-	//var from = $("#from").val();
-	//var to = $("#to").val();
+
 	var from_way_lat = appKontekst.fromMarker.storage.getLatLng().lat();
 	var from_way_lng = appKontekst.fromMarker.storage.getLatLng().lng();
 	var to_way_lat = appKontekst.toMarker.storage.getLatLng().lat();
@@ -521,6 +535,9 @@ function findRoute(){
 	  received_way = JSON.parse(data);
 	  if (received_way.trasa) {
 	  	drawRoute(received_way.trasa);
+		appKontekst.tripDuration = appKontekst.tripDuration + received_way.calkowity_czas;
+		appKontekst.fromRouteDirection = showWay('From',received_way.trasa[0].lat,received_way.trasa[0].lng,appKontekst.fromRouteDirection,false);
+		appKontekst.toRouteDirection = showWay('To',received_way.trasa[received_way.trasa.length-1].lat,received_way.trasa[received_way.trasa.length-1].lng,appKontekst.toRouteDirection,false);
 		completeDesc(received_way.polaczenia);
 	  }else{
 	  	alert('Brak trasy');
